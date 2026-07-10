@@ -215,21 +215,38 @@
         function copyPeers() {
             const text = document.getElementById('peer-list-code').textContent;
             navigator.clipboard.writeText(text);
-            alert("Live Peers listesi başarıyla panoya kopyalandı!");
+            alert("Live Peers listesi panoya kopyalandı!");
         }
 
         const RPC_URL = "https://rpc.test13.testnets.gno.land"; 
         
-        // ================= Veri Çekme Motoru =================
         let latestBlocks = [];
-        let peerMonikerMap = {}; // Eşlerden gelen isimleri hafızada tutarız
+        let peerMonikerMap = {}; 
+        let knownMonikers = {};
 
-        // ÖZEL İSİM SÖZLÜĞÜ: RPC'nin isim vermediği nodelar için Hex adresini buraya manuel ekleyebilirsin.
-        const knownMonikers = {
-            "g1alat...": "ZeycaNode", // Kendi node adresini buraya tam olarak yazıp sabitleyebilirsin
-            "g1core...": "Corenode"
-        };
+        // Genesis dosyasından Moniker'leri Çekme Fonksiyonu
+        async function fetchMonikers() {
+             try {
+                 const response = await fetch('https://api.github.com/repos/gnolang/gno/contents/misc/testnet/genesis.json');
+                 if(response.ok){
+                      const data = await response.json();
+                      const decodedContent = atob(data.content);
+                      const genesis = JSON.parse(decodedContent);
+                      
+                      if(genesis && genesis.app_state && genesis.app_state.staking && genesis.app_state.staking.validators){
+                          genesis.app_state.staking.validators.forEach(v => {
+                               knownMonikers[v.operator_address] = v.description.moniker;
+                          });
+                      }
+                 }
+                 // Sabit Özel Kayıtlar
+                 knownMonikers["g1alat..."] = "ZeycaNode";
+            } catch (e) {
+                 console.log("Genesis json çekilemedi, lokal sözlük kullanılacak.", e);
+            }
+        }
 
+        // Aktif Peer'leri Çekme Fonksiyonu
         async function fetchPeers() {
             try {
                 const response = await fetch(`${RPC_URL}/net_info`);
@@ -242,16 +259,20 @@
                     let peerStringArray = [];
                     peers.forEach(p => {
                         let ip = p.remote_ip;
-                        let port = p.node_info.listen_addr.split(':').pop(); // tcp://... içinden portu ayırır
+                        let port = p.node_info.listen_addr.split(':').pop(); 
+                        
                         peerStringArray.push(`${p.node_info.id}@${ip}:${port}`);
                         
-                        // Validatörlerle eşleştirmek için peer isimlerini hafızaya alıyoruz
                         if(p.node_info.moniker) {
                             peerMonikerMap[p.node_info.id] = p.node_info.moniker;
+                            // Ekstra olarak knownMonikers objesini de güncelliyoruz ki validatörlerde de çıksın
+                            // Not: Peer id ile validator address aynı değildir, ama isim havuzuna katkı sağlar.
                         }
                     });
 
                     document.getElementById('peer-list-code').textContent = `persistent_peers = "${peerStringArray.join(',')}"`;
+                } else {
+                     document.getElementById('peer-list-code').textContent = "Peer verisi çekilemedi. RPC sunucusu net_info sorgularını engelliyor olabilir.";
                 }
             } catch (error) {
                 console.error("RPC Peers Hatası:", error);
@@ -259,8 +280,14 @@
             }
         }
 
+        // Validatörleri Çekme Fonksiyonu
         async function fetchValidators() {
             try {
+                // Eğer moniker sözlüğü boşsa önce gidip doldurmaya çalış
+                if(Object.keys(knownMonikers).length === 0){
+                    await fetchMonikers();
+                }
+
                 const response = await fetch(`${RPC_URL}/validators?per_page=100`);
                 const data = await response.json();
                 
@@ -271,7 +298,7 @@
                     validators.sort((a, b) => parseInt(b.voting_power) - parseInt(a.voting_power));
 
                     document.getElementById('validators-tbody').innerHTML = validators.map((val, index) => {
-                        // Moniker Mantığı: 1. Sözlükte var mı? -> 2. Yoksa "Bilinmeyen Node" yaz.
+                        
                         let displayName = knownMonikers[val.address] || `Bilinmeyen Node (${val.address.substring(0,6)})`;
                         
                         return `<tr class="hover:bg-slate-800/40 transition-colors group">
@@ -295,6 +322,7 @@
             }
         }
 
+        // Dashboard Verilerini Çekme Fonksiyonu
         async function fetchNetworkStatus() {
             try {
                 const response = await fetch(`${RPC_URL}/status`);
