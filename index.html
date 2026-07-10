@@ -19,6 +19,12 @@
         .nav-link { color: #94a3b8; transition: all 0.3s ease; }
         .nav-link:hover { color: #f4f4f5; }
         .nav-link.active { color: #f4f4f5; border-bottom: 2px solid #10b981; }
+        
+        /* Özel Scrollbar */
+        ::-webkit-scrollbar { height: 8px; width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -43,6 +49,7 @@
             <div class="flex space-x-6 text-sm font-semibold">
                 <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-link active pb-1" data-i18n="nav_dashboard">Dashboard</button>
                 <button onclick="switchTab('validators')" id="tab-validators" class="nav-link pb-1" data-i18n="nav_validators">Validatörler</button>
+                <button onclick="switchTab('peers')" id="tab-peers" class="nav-link pb-1" data-i18n="nav_peers">Live Peers</button>
             </div>
 
             <div class="flex items-center space-x-3 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
@@ -125,17 +132,38 @@
                     <table class="w-full text-left text-sm text-slate-300 whitespace-nowrap">
                         <thead class="text-xs text-slate-400 bg-slate-900/50 uppercase tracking-wider">
                             <tr>
-                                <th class="p-4 w-16 text-center">Sıra</th>
+                                <th class="p-4 w-16 text-center">#</th>
                                 <th class="p-4" data-i18n="th_moniker">Moniker (Node Adı)</th>
                                 <th class="p-4" data-i18n="th_address">Hex Adresi</th>
-                                <th class="p-4 text-right" data-i18n="th_power">Oy Gücü (Voting Power)</th>
-                                <th class="p-4 text-right">Proposer Priority</th>
+                                <th class="p-4 text-right" data-i18n="th_power">Oy Gücü</th>
+                                <th class="p-4 text-center">Durum</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-800" id="validators-tbody">
-                            <tr><td colspan="5" class="p-8 text-center text-slate-500 font-mono">Validatörler ağdan çekiliyor... Lütfen bekleyin.</td></tr>
+                            <tr><td colspan="5" class="p-8 text-center text-slate-500 font-mono">Validatörler ağdan çekiliyor...</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-peers" class="tab-content">
+            <div class="card-bg rounded-2xl flex flex-col overflow-hidden">
+                <div class="px-6 py-5 border-b border-slate-700 bg-slate-800/30 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-lg font-bold text-white m-0" data-i18n="title_peers">Live Peers (Aktif Node'lar)</h2>
+                        <p class="text-xs text-slate-400 mt-1" id="peer-count-text">Ağ üzerindeki eşlere bağlanılıyor...</p>
+                    </div>
+                    <button onclick="copyPeers()" class="text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg transition-colors flex items-center shadow-sm">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        <span data-i18n="btn_copy">Kopyala</span>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <div class="bg-[#090d14] p-5 rounded-xl border border-slate-800 overflow-x-auto relative group">
+                        <div class="text-slate-500 text-xs mb-2 select-none"># Gnoland config.toml veya komut satırı için güncel peers listesi:</div>
+                        <pre id="peer-list-code" class="text-emerald-400 font-mono text-xs whitespace-pre-wrap break-all leading-relaxed">Veri bekleniyor...</pre>
+                    </div>
                 </div>
             </div>
         </div>
@@ -151,18 +179,18 @@
     <script>
         const languages = {
             tr: {
-                nav_dashboard: "Dashboard", nav_validators: "Validatörler",
-                search_placeholder: "Blok Yüksekliği, Hash veya Adres Ara...", btn_search: "Ara",
+                nav_dashboard: "Dashboard", nav_validators: "Validatörler", nav_peers: "Live Peers",
+                search_placeholder: "Blok Yüksekliği, Hash veya Adres Ara...", btn_search: "Ara", btn_copy: "Kopyala",
                 stat_height: "Ağ Yüksekliği", stat_network: "Ağ ID", stat_validators: "Toplam Validatör", stat_node: "Node Versiyonu",
-                title_blocks: "Canlı Bloklar", title_txs: "Son İşlemler", title_val_list: "Aktif Validatör Listesi",
+                title_blocks: "Canlı Bloklar", title_txs: "Son İşlemler", title_val_list: "Aktif Validatör Listesi", title_peers: "Live Peers (Aktif Node'lar)",
                 th_height: "Yükseklik", th_hash: "Blok Hash", th_txs: "Tx",
-                th_moniker: "Moniker (Node Adı)", th_address: "Hex Adresi", th_power: "Oy Gücü (Voting Power)"
+                th_moniker: "Moniker (Node Adı)", th_address: "Hex Adresi", th_power: "Oy Gücü"
             },
             en: {
-                nav_dashboard: "Dashboard", nav_validators: "Validators",
-                search_placeholder: "Search Block Height, Hash or Address...", btn_search: "Search",
+                nav_dashboard: "Dashboard", nav_validators: "Validators", nav_peers: "Live Peers",
+                search_placeholder: "Search Block Height, Hash or Address...", btn_search: "Search", btn_copy: "Copy",
                 stat_height: "Network Height", stat_network: "Chain ID", stat_validators: "Total Validators", stat_node: "Node Version",
-                title_blocks: "Live Blocks", title_txs: "Latest Transactions", title_val_list: "Active Validator List",
+                title_blocks: "Live Blocks", title_txs: "Latest Transactions", title_val_list: "Active Validator List", title_peers: "Live Peers",
                 th_height: "Height", th_hash: "Block Hash", th_txs: "Tx",
                 th_moniker: "Moniker", th_address: "Hex Address", th_power: "Voting Power"
             }
@@ -184,47 +212,51 @@
             document.getElementById('tab-' + tabId).classList.add('active');
         }
 
-        // Güncellenen Yeni RPC Adresi
-        const RPC_URL = "https://rpc.test13.testnets.gno.land"; 
-        
-        async function fetchNetworkStatus() {
-            try {
-                const response = await fetch(`${RPC_URL}/status`);
-                const data = await response.json();
-                
-                if(data && data.result) {
-                    const status = data.result;
-                    document.getElementById('live-height').textContent = "#" + parseInt(status.sync_info.latest_block_height).toLocaleString();
-                    document.getElementById('live-chain-id').textContent = status.node_info.network;
-                    document.getElementById('live-node-version').textContent = status.node_info.version;
-                    
-                    document.getElementById('connection-dot').classList.replace('bg-red-500', 'bg-emerald-500');
-                    
-                    updateBlockTable(status.sync_info);
-                }
-            } catch (error) {
-                console.error("RPC Bağlantı Hatası (Status):", error);
-                document.getElementById('connection-dot').classList.replace('bg-emerald-500', 'bg-red-500');
-            }
+        function copyPeers() {
+            const text = document.getElementById('peer-list-code').textContent;
+            navigator.clipboard.writeText(text);
+            alert("Live Peers listesi başarıyla panoya kopyalandı!");
         }
 
+        const RPC_URL = "https://rpc.test13.testnets.gno.land"; 
+        
+        // ================= Veri Çekme Motoru =================
         let latestBlocks = [];
-        function updateBlockTable(syncInfo) {
-            const height = syncInfo.latest_block_height;
-            const hash = syncInfo.latest_block_hash.substring(0, 16) + "...";
-            
-            if(!latestBlocks.find(b => b.height === height)) {
-                latestBlocks.unshift({ height, hash, txs: Math.floor(Math.random() * 5) });
-                if(latestBlocks.length > 5) latestBlocks.pop();
-            }
+        let peerMonikerMap = {}; // Eşlerden gelen isimleri hafızada tutarız
 
-            document.getElementById('blocks-tbody').innerHTML = latestBlocks.map(b => 
-                `<tr class="hover:bg-slate-800/40 transition-colors">
-                    <td class="p-4 text-zinc-300 font-mono"><span class="text-emerald-400 mr-2">#</span>${b.height}</td>
-                    <td class="p-4 font-mono text-zinc-400">${b.hash}</td>
-                    <td class="p-4 font-mono text-right text-zinc-300">${b.txs}</td>
-                </tr>`
-            ).join('');
+        // ÖZEL İSİM SÖZLÜĞÜ: RPC'nin isim vermediği nodelar için Hex adresini buraya manuel ekleyebilirsin.
+        const knownMonikers = {
+            "g1alat...": "ZeycaNode", // Kendi node adresini buraya tam olarak yazıp sabitleyebilirsin
+            "g1core...": "Corenode"
+        };
+
+        async function fetchPeers() {
+            try {
+                const response = await fetch(`${RPC_URL}/net_info`);
+                const data = await response.json();
+                
+                if(data && data.result && data.result.peers) {
+                    const peers = data.result.peers;
+                    document.getElementById('peer-count-text').textContent = `Toplam ${peers.length} aktif bağlantı tespit edildi.`;
+
+                    let peerStringArray = [];
+                    peers.forEach(p => {
+                        let ip = p.remote_ip;
+                        let port = p.node_info.listen_addr.split(':').pop(); // tcp://... içinden portu ayırır
+                        peerStringArray.push(`${p.node_info.id}@${ip}:${port}`);
+                        
+                        // Validatörlerle eşleştirmek için peer isimlerini hafızaya alıyoruz
+                        if(p.node_info.moniker) {
+                            peerMonikerMap[p.node_info.id] = p.node_info.moniker;
+                        }
+                    });
+
+                    document.getElementById('peer-list-code').textContent = `persistent_peers = "${peerStringArray.join(',')}"`;
+                }
+            } catch (error) {
+                console.error("RPC Peers Hatası:", error);
+                document.getElementById('peer-list-code').textContent = "Peer verisi çekilemedi. RPC yanıt vermiyor olabilir.";
+            }
         }
 
         async function fetchValidators() {
@@ -238,31 +270,74 @@
                     
                     validators.sort((a, b) => parseInt(b.voting_power) - parseInt(a.voting_power));
 
-                    document.getElementById('validators-tbody').innerHTML = validators.map((val, index) => 
-                        `<tr class="hover:bg-slate-800/40 transition-colors group">
+                    document.getElementById('validators-tbody').innerHTML = validators.map((val, index) => {
+                        // Moniker Mantığı: 1. Sözlükte var mı? -> 2. Yoksa "Bilinmeyen Node" yaz.
+                        let displayName = knownMonikers[val.address] || `Bilinmeyen Node (${val.address.substring(0,6)})`;
+                        
+                        return `<tr class="hover:bg-slate-800/40 transition-colors group">
                             <td class="p-4 text-center font-mono text-slate-500">${index + 1}</td>
                             <td class="p-4 font-mono text-white font-medium flex items-center">
-                                <div class="w-6 h-6 rounded-full bg-slate-700 mr-3 flex items-center justify-center text-[10px]">GN</div>
-                                <span class="group-hover:text-emerald-400 transition-colors">${val.pub_key.value.substring(0,8)}...</span>
+                                <div class="w-6 h-6 rounded-full bg-slate-700 mr-3 flex items-center justify-center text-[10px] text-zinc-300">GN</div>
+                                <span class="group-hover:text-emerald-400 transition-colors">${displayName}</span>
                             </td>
                             <td class="p-4 font-mono text-zinc-500 text-xs">${val.address}</td>
-                            <td class="p-4 font-mono text-right text-emerald-400">${parseInt(val.voting_power).toLocaleString()}</td>
-                            <td class="p-4 font-mono text-right text-zinc-400">${val.proposer_priority}</td>
+                            <td class="p-4 font-mono text-right text-emerald-400 font-bold">${parseInt(val.voting_power).toLocaleString()}</td>
+                            <td class="p-4 text-center">
+                                <span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-medium bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">
+                                    <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5 animate-pulse"></span>Aktif
+                                </span>
+                            </td>
+                        </tr>`;
+                    }).join('');
+                }
+            } catch (error) {
+                console.error("RPC Validators Hatası:", error);
+            }
+        }
+
+        async function fetchNetworkStatus() {
+            try {
+                const response = await fetch(`${RPC_URL}/status`);
+                const data = await response.json();
+                
+                if(data && data.result) {
+                    const status = data.result;
+                    document.getElementById('live-height').textContent = "#" + parseInt(status.sync_info.latest_block_height).toLocaleString();
+                    document.getElementById('live-chain-id').textContent = status.node_info.network;
+                    document.getElementById('live-node-version').textContent = status.node_info.version;
+                    document.getElementById('connection-dot').classList.replace('bg-red-500', 'bg-emerald-500');
+                    
+                    const height = status.sync_info.latest_block_height;
+                    const hash = status.sync_info.latest_block_hash.substring(0, 16) + "...";
+                    
+                    if(!latestBlocks.find(b => b.height === height)) {
+                        latestBlocks.unshift({ height, hash, txs: Math.floor(Math.random() * 5) });
+                        if(latestBlocks.length > 5) latestBlocks.pop();
+                    }
+
+                    document.getElementById('blocks-tbody').innerHTML = latestBlocks.map(b => 
+                        `<tr class="hover:bg-slate-800/40 transition-colors">
+                            <td class="p-4 text-zinc-300 font-mono"><span class="text-emerald-400 mr-2">#</span>${b.height}</td>
+                            <td class="p-4 font-mono text-zinc-400">${b.hash}</td>
+                            <td class="p-4 font-mono text-right text-zinc-300">${b.txs}</td>
                         </tr>`
                     ).join('');
                 }
             } catch (error) {
-                console.error("RPC Bağlantı Hatası (Validators):", error);
+                console.error("RPC Status Hatası:", error);
+                document.getElementById('connection-dot').classList.replace('bg-emerald-500', 'bg-red-500');
             }
         }
 
         // Başlatıcılar
         fetchNetworkStatus();
+        fetchPeers();
         fetchValidators();
         
         // Yenileme Döngüleri
         setInterval(fetchNetworkStatus, 5000);
-        setInterval(fetchValidators, 30000);
+        setInterval(fetchPeers, 30000);
+        setInterval(fetchValidators, 60000);
 
     </script>
 </body>
