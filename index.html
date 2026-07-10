@@ -12,17 +12,25 @@
         .card-bg { background-color: #1e293b; border: 1px solid #334155; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .nav-link.active { border-bottom: 2px solid #10b981; color: white; }
+        .nav-link { color: #94a3b8; transition: 0.3s; }
+        .nav-link.active { color: #10b981; border-bottom: 2px solid #10b981; }
     </style>
 </head>
 <body class="min-h-screen">
-    <nav class="border-b border-slate-800 p-6">
+    <nav class="border-b border-slate-800 px-6 py-4">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">Zeyca<span class="text-zinc-400">Node</span></h1>
+            <div class="flex items-center space-x-2">
+                <span class="text-xl font-bold">Zeyca<span class="text-zinc-400">Node</span></span>
+                <span class="text-[10px] bg-zinc-800 px-2 py-0.5 rounded-full font-mono">Testnet-13</span>
+            </div>
             <div class="flex space-x-6 text-sm font-semibold">
                 <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-link active pb-1">Dashboard</button>
                 <button onclick="switchTab('validators')" id="tab-validators" class="nav-link pb-1">Validatörler</button>
                 <button onclick="switchTab('peers')" id="tab-peers" class="nav-link pb-1">Live Peers</button>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="switchLang('tr')" class="text-xs bg-slate-700 px-2 py-1 rounded">TR</button>
+                <button onclick="switchLang('en')" class="text-xs bg-slate-700 px-2 py-1 rounded">EN</button>
             </div>
         </div>
     </nav>
@@ -30,67 +38,67 @@
     <main class="max-w-7xl mx-auto px-6 py-8">
         <div id="view-dashboard" class="tab-content active">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="card-bg p-6 rounded-2xl"><div class="text-xs text-slate-400">AĞ YÜKSEKLİĞİ</div><div class="text-3xl font-bold mt-2 font-mono" id="live-height">...</div></div>
-                <div class="card-bg p-6 rounded-2xl"><div class="text-xs text-slate-400">AĞ ID</div><div class="text-3xl font-bold text-emerald-400 mt-2 font-mono" id="live-chain-id">...</div></div>
-                <div class="card-bg p-6 rounded-2xl"><div class="text-xs text-slate-400">TOPLAM VALIDATÖR</div><div class="text-3xl font-bold mt-2 font-mono" id="live-val-count">0</div></div>
+                <div class="card-bg p-6 rounded-2xl"><div class="text-xs text-slate-400 uppercase">Ağ Yüksekliği</div><div class="text-3xl font-bold mt-2 font-mono" id="live-height">...</div></div>
+                <div class="card-bg p-6 rounded-2xl"><div class="text-xs text-slate-400 uppercase">Ağ ID</div><div class="text-3xl font-bold text-emerald-400 mt-2 font-mono" id="live-chain-id">...</div></div>
+                <div class="card-bg p-6 rounded-2xl"><div class="text-xs text-slate-400 uppercase">Toplam Validatör</div><div class="text-3xl font-bold mt-2 font-mono" id="live-val-count">0</div></div>
             </div>
         </div>
+
         <div id="view-validators" class="tab-content">
-            <div class="card-bg rounded-2xl overflow-hidden"><table class="w-full text-sm"><tbody id="validators-tbody"><tr><td class="p-4">Veriler çekiliyor...</td></tr></tbody></table></div>
+            <div class="card-bg rounded-2xl overflow-hidden">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-900/50 text-slate-400 uppercase text-xs"><tr><th class="p-4">#</th><th class="p-4">Moniker</th><th class="p-4">Adres</th><th class="p-4 text-right">Güç</th></tr></thead>
+                    <tbody id="validators-tbody" class="divide-y divide-slate-800"></tbody>
+                </table>
+            </div>
         </div>
+
         <div id="view-peers" class="tab-content">
-            <div class="card-bg rounded-2xl p-6"><button onclick="copyPeers()" class="bg-emerald-600 px-4 py-2 rounded mb-4 text-xs font-bold">Listeyi Kopyala</button><pre id="peer-list-code" class="text-emerald-400 font-mono text-xs whitespace-pre-wrap">Veriler çekiliyor...</pre></div>
+            <div class="card-bg rounded-2xl p-6">
+                <button onclick="copyPeers()" class="bg-emerald-600 px-4 py-2 rounded text-xs mb-4 font-bold">Kopyala</button>
+                <pre id="peer-list-code" class="text-emerald-400 font-mono text-xs whitespace-pre-wrap"></pre>
+            </div>
         </div>
     </main>
 
     <script>
-        // GÜVENLİ KÖPRÜ ADRESİ
         const RPC_URL = "https://gnolandexplorer.zeycanode.com/rpc"; 
         let knownMonikers = {"g1alat...": "ZeycaNode"};
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-            document.getElementById('view-' + tabId).classList.add('active');
-            document.getElementById('tab-' + tabId).classList.add('active');
+        function switchTab(id) {
+            document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(e => e.classList.remove('active'));
+            document.getElementById('view-'+id).classList.add('active');
+            document.getElementById('tab-'+id).classList.add('active');
         }
 
         async function init() {
-            // 1. Genesis Moniker Eşleştirme
             try {
+                // Genesis
                 const res = await fetch('https://api.github.com/repos/gnolang/gno/contents/misc/testnet/genesis.json');
-                const data = await res.json();
-                const gen = JSON.parse(atob(data.content));
+                const gen = JSON.parse(atob((await res.json()).content));
                 gen.app_state.staking.validators.forEach(v => knownMonikers[v.operator_address] = v.description.moniker);
-            } catch(e) { console.warn("Genesis yüklenemedi"); }
+            } catch(e) {}
 
-            // 2. Ana Verileri Çekme
             try {
-                const [statusRes, valsRes, peersRes] = await Promise.all([
-                    fetch(`${RPC_URL}/status`),
-                    fetch(`${RPC_URL}/validators?per_page=100`),
-                    fetch(`${RPC_URL}/net_info`)
+                // Veriler
+                const [status, vals, peers] = await Promise.all([
+                    (await fetch(`${RPC_URL}/status`)).json(),
+                    (await fetch(`${RPC_URL}/validators?per_page=100`)).json(),
+                    (await fetch(`${RPC_URL}/net_info`)).json()
                 ]);
-                
-                const status = await statusRes.json();
-                const vals = await valsRes.json();
-                const peers = await peersRes.json();
 
                 document.getElementById('live-height').textContent = "#" + parseInt(status.result.sync_info.latest_block_height).toLocaleString();
                 document.getElementById('live-chain-id').textContent = status.result.node_info.network;
                 document.getElementById('live-val-count').textContent = vals.result.validators.length;
-
-                document.getElementById('validators-tbody').innerHTML = vals.result.validators.map(v => 
-                    `<tr><td class="p-4 font-bold">${knownMonikers[v.address] || 'Bilinmeyen'}</td><td class="p-4 font-mono text-xs">${v.address.substring(0,10)}...</td><td class="p-4 text-right">${parseInt(v.voting_power).toLocaleString()}</td></tr>`
+                
+                document.getElementById('validators-tbody').innerHTML = vals.result.validators.map((v, i) => 
+                    `<tr><td class="p-4">${i+1}</td><td class="p-4 font-bold">${knownMonikers[v.address] || 'Bilinmeyen'}</td><td class="p-4 font-mono">${v.address.substring(0,10)}...</td><td class="p-4 text-right">${parseInt(v.voting_power).toLocaleString()}</td></tr>`
                 ).join('');
-
+                
                 document.getElementById('peer-list-code').textContent = peers.result.peers.map(p => `${p.node_info.id}@${p.remote_ip}:${p.node_info.listen_addr.split(':').pop()}`).join(',');
-            } catch(e) { 
-                console.error("Veri çekme hatası:", e);
-                document.getElementById('live-height').textContent = "HATA";
-            }
+            } catch(e) { console.error(e); }
         }
-
         init();
         setInterval(init, 60000);
         function copyPeers() { navigator.clipboard.writeText(document.getElementById('peer-list-code').textContent); alert("Kopyalandı!"); }
