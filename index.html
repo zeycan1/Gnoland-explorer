@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZeycaNode | Gnoland Explorer</title>
+    <title>ZeycaNode | Gnoland Testnet-13 Explorer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -35,25 +35,16 @@
                 <div class="card-bg p-6 rounded-2xl"><div class="text-xs text-slate-400">TOPLAM VALIDATÖR</div><div class="text-3xl font-bold mt-2 font-mono" id="live-val-count">0</div></div>
             </div>
         </div>
-
         <div id="view-validators" class="tab-content">
-            <div class="card-bg rounded-2xl overflow-hidden">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-900/50 text-slate-400"><tr><th class="p-4">Moniker</th><th class="p-4">Hex Adres</th><th class="p-4 text-right">Oy Gücü</th></tr></thead>
-                    <tbody id="validators-tbody" class="divide-y divide-slate-800"><tr><td class="p-4">Yükleniyor...</td></tr></tbody>
-                </table>
-            </div>
+            <div class="card-bg rounded-2xl overflow-hidden"><table class="w-full text-sm"><tbody id="validators-tbody"><tr><td class="p-4">Veriler çekiliyor...</td></tr></tbody></table></div>
         </div>
-
         <div id="view-peers" class="tab-content">
-            <div class="card-bg rounded-2xl p-6">
-                <button onclick="copyPeers()" class="bg-emerald-600 text-xs px-4 py-2 rounded mb-4">Listeyi Kopyala</button>
-                <pre id="peer-list-code" class="text-emerald-400 font-mono text-xs whitespace-pre-wrap">Yükleniyor...</pre>
-            </div>
+            <div class="card-bg rounded-2xl p-6"><button onclick="copyPeers()" class="bg-emerald-600 px-4 py-2 rounded mb-4 text-xs font-bold">Listeyi Kopyala</button><pre id="peer-list-code" class="text-emerald-400 font-mono text-xs whitespace-pre-wrap">Veriler çekiliyor...</pre></div>
         </div>
     </main>
 
     <script>
+        // GÜVENLİ KÖPRÜ ADRESİ
         const RPC_URL = "https://gnolandexplorer.zeycanode.com/rpc"; 
         let knownMonikers = {"g1alat...": "ZeycaNode"};
 
@@ -64,39 +55,45 @@
             document.getElementById('tab-' + tabId).classList.add('active');
         }
 
-        function copyPeers() {
-            navigator.clipboard.writeText(document.getElementById('peer-list-code').textContent);
-            alert("Kopyalandı!");
-        }
-
         async function init() {
-            // Monikerleri çek
+            // 1. Genesis Moniker Eşleştirme
             try {
                 const res = await fetch('https://api.github.com/repos/gnolang/gno/contents/misc/testnet/genesis.json');
                 const data = await res.json();
                 const gen = JSON.parse(atob(data.content));
                 gen.app_state.staking.validators.forEach(v => knownMonikers[v.operator_address] = v.description.moniker);
-            } catch(e) { console.log("Genesis yüklenemedi"); }
+            } catch(e) { console.warn("Genesis yüklenemedi"); }
 
-            // Verileri çek
+            // 2. Ana Verileri Çekme
             try {
-                const status = await (await fetch(`${RPC_URL}/status`)).json();
+                const [statusRes, valsRes, peersRes] = await Promise.all([
+                    fetch(`${RPC_URL}/status`),
+                    fetch(`${RPC_URL}/validators?per_page=100`),
+                    fetch(`${RPC_URL}/net_info`)
+                ]);
+                
+                const status = await statusRes.json();
+                const vals = await valsRes.json();
+                const peers = await peersRes.json();
+
                 document.getElementById('live-height').textContent = "#" + parseInt(status.result.sync_info.latest_block_height).toLocaleString();
                 document.getElementById('live-chain-id').textContent = status.result.node_info.network;
-
-                const vals = await (await fetch(`${RPC_URL}/validators?per_page=100`)).json();
                 document.getElementById('live-val-count').textContent = vals.result.validators.length;
+
                 document.getElementById('validators-tbody').innerHTML = vals.result.validators.map(v => 
-                    `<tr><td class="p-4">${knownMonikers[v.address] || 'Bilinmeyen'}</td><td class="p-4 font-mono">${v.address.substring(0,10)}...</td><td class="p-4 text-right">${parseInt(v.voting_power).toLocaleString()}</td></tr>`
+                    `<tr><td class="p-4 font-bold">${knownMonikers[v.address] || 'Bilinmeyen'}</td><td class="p-4 font-mono text-xs">${v.address.substring(0,10)}...</td><td class="p-4 text-right">${parseInt(v.voting_power).toLocaleString()}</td></tr>`
                 ).join('');
 
-                const peers = await (await fetch(`${RPC_URL}/net_info`)).json();
                 document.getElementById('peer-list-code').textContent = peers.result.peers.map(p => `${p.node_info.id}@${p.remote_ip}:${p.node_info.listen_addr.split(':').pop()}`).join(',');
-            } catch(e) { console.error(e); }
+            } catch(e) { 
+                console.error("Veri çekme hatası:", e);
+                document.getElementById('live-height').textContent = "HATA";
+            }
         }
 
         init();
         setInterval(init, 60000);
+        function copyPeers() { navigator.clipboard.writeText(document.getElementById('peer-list-code').textContent); alert("Kopyalandı!"); }
     </script>
 </body>
 </html>
