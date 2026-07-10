@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZeycaNode | Gnoland Testnet-13 Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .card-bg { background-color: #1e293b; border: 1px solid #334155; }
+        .glass-header { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid #334155; }
+        
+        /* ZeycaNode Özel Renk Paleti */
+        .text-zeyca { color: #f4f4f5; }
+        .border-zeyca { border-color: #52525b; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Navbar -->
+    <nav class="glass-header sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <!-- ZeycaNode SVG Logo -->
+                <svg viewBox="0 0 100 100" class="w-10 h-10 drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100" height="100" rx="12" fill="#050505"/>
+                    <path d="M20 20 H80 V42 L48 42 L20 68 V20 Z" fill="#FFFFFF"/>
+                    <path d="M80 80 H20 V58 L52 58 L80 32 V80 Z" fill="#FFFFFF"/>
+                </svg>
+                <div class="flex flex-col">
+                    <span class="text-xl font-bold tracking-tight text-white">Zeyca<span class="text-zinc-400">Node</span></span>
+                    <span class="text-[10px] font-mono text-zinc-400 tracking-widest uppercase">Gnoland Explorer</span>
+                </div>
+                <span class="ml-4 text-xs bg-zinc-800 border border-zinc-700 text-zinc-300 px-2.5 py-0.5 rounded-full font-mono flex items-center shadow-sm">
+                    <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
+                    Testnet-13
+                </span>
+            </div>
+            <div class="flex items-center space-x-3 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+                <button onclick="switchLang('tr')" id="btn-tr" class="text-xs font-bold px-3 py-1.5 rounded bg-slate-700 text-white transition-all shadow-sm">TR</button>
+                <button onclick="switchLang('en')" id="btn-en" class="text-xs font-bold px-3 py-1.5 rounded text-slate-400 hover:text-white transition-all">EN</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Dashboard -->
+    <main class="flex-grow max-w-7xl mx-auto px-6 py-8 w-full">
+        <!-- Search Bar -->
+        <div class="mb-8">
+            <div class="card-bg rounded-2xl p-2 flex items-center shadow-lg focus-within:border-zinc-400 transition-colors duration-300">
+                <svg class="w-6 h-6 text-slate-400 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" id="search-input" data-i18n-placeholder="search_placeholder" placeholder="Blok, İşlem (Tx) veya Cüzdan Adresi Ara..." class="w-full bg-transparent border-none px-4 py-3 text-sm focus:outline-none focus:ring-0 text-white placeholder-slate-500 font-mono">
+                <button class="bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors" data-i18n="btn_search">Ara</button>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="card-bg p-6 rounded-2xl relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                </div>
+                <div class="text-xs text-slate-400 font-medium tracking-wide uppercase" data-i18n="stat_height">Ağ Yüksekliği</div>
+                <div class="text-3xl font-bold text-white mt-2 font-mono tracking-tight" id="stat-height">#2,849,104</div>
+            </div>
+            
+            <div class="card-bg p-6 rounded-2xl relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <svg class="w-12 h-12 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                </div>
+                <div class="text-xs text-slate-400 font-medium tracking-wide uppercase" data-i18n="stat_validators">Aktif Validatörler</div>
+                <div class="text-3xl font-bold text-emerald-400 mt-2 font-mono tracking-tight" id="stat-validators">48 / 62</div>
+            </div>
+            
+            <div class="card-bg p-6 rounded-2xl relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div class="text-xs text-slate-400 font-medium tracking-wide uppercase" data-i18n="stat_blocktime">Ortalama Blok Süresi</div>
+                <div class="text-3xl font-bold text-white mt-2 font-mono tracking-tight">1.84s</div>
+            </div>
+            
+            <div class="card-bg p-6 rounded-2xl relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <div class="text-xs text-slate-400 font-medium tracking-wide uppercase" data-i18n="stat_txs">Toplam İşlem (Tx)</div>
+                <div class="text-3xl font-bold text-zinc-300 mt-2 font-mono tracking-tight">14,920,431</div>
+            </div>
+        </div>
+
+        <!-- Content Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Latest Blocks -->
+            <div class="card-bg rounded-2xl flex flex-col overflow-hidden">
+                <div class="px-6 py-5 border-b border-slate-700 flex justify-between items-center bg-slate-800/30">
+                    <h2 class="text-lg font-bold text-white m-0 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                        <span data-i18n="title_blocks">Son Bloklar</span>
+                    </h2>
+                    <button class="text-xs font-semibold text-zinc-400 hover:text-white transition-colors" data-i18n="btn_view_all">Tümünü Gör →</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-300 whitespace-nowrap">
+                        <thead class="text-xs text-slate-400 bg-slate-900/50 uppercase tracking-wider">
+                            <tr>
+                                <th class="p-4 font-medium" data-i18n="th_height">Yükseklik</th>
+                                <th class="p-4 font-medium" data-i18n="th_proposer">Üretici Validatör</th>
+                                <th class="p-4 font-medium text-right" data-i18n="th_txs">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800" id="blocks-tbody">
+                            <!-- Dynamic rows via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Latest Transactions -->
+            <div class="card-bg rounded-2xl flex flex-col overflow-hidden">
+                <div class="px-6 py-5 border-b border-slate-700 flex justify-between items-center bg-slate-800/30">
+                    <h2 class="text-lg font-bold text-white m-0 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                        <span data-i18n="title_txs">Son İşlemler</span>
+                    </h2>
+                    <button class="text-xs font-semibold text-zinc-400 hover:text-white transition-colors" data-i18n="btn_view_all">Tümünü Gör →</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-300 whitespace-nowrap">
+                        <thead class="text-xs text-slate-400 bg-slate-900/50 uppercase tracking-wider">
+                            <tr>
+                                <th class="p-4 font-medium" data-i18n="th_hash">Tx Hash</th>
+                                <th class="p-4 font-medium" data-i18n="th_type">İşlem Tipi</th>
+                                <th class="p-4 font-medium text-right" data-i18n="th_status">Durum</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800" id="txs-tbody">
+                            <!-- Dynamic rows via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-6 mt-8">
+        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
+            <div class="text-xs text-slate-500 font-mono">
+                © 2026 ZeycaNode Network Infrastructure. 
+            </div>
+            <div class="flex space-x-4">
+                <a href="#" class="text-slate-500 hover:text-white transition-colors"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"></path></svg></a>
+                <a href="#" class="text-slate-500 hover:text-white transition-colors"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path></svg></a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const languages = {
+            tr: {
+                search_placeholder: "Blok, İşlem (Tx) veya Cüzdan Adresi Ara...",
+                stat_height: "Ağ Yüksekliği",
+                stat_validators: "Aktif Validatörler",
+                stat_blocktime: "Ortalama Blok Süresi",
+                stat_txs: "Toplam İşlem (Tx)",
+                title_blocks: "Son Bloklar",
+                title_txs: "Son İşlemler",
+                th_height: "Yükseklik",
+                th_proposer: "Üretici Validatör",
+                th_txs: "İşlem",
+                th_hash: "Tx Hash",
+                th_type: "İşlem Tipi",
+                th_status: "Durum",
+                btn_search: "Ara",
+                btn_view_all: "Tümünü Gör →"
+            },
+            en: {
+                search_placeholder: "Search Block, Tx Hash or Wallet Address...",
+                stat_height: "Network Height",
+                stat_validators: "Active Validators",
+                stat_blocktime: "Average Block Time",
+                stat_txs: "Total Transactions",
+                title_blocks: "Latest Blocks",
+                title_txs: "Latest Transactions",
+                th_height: "Height",
+                th_proposer: "Proposer Validator",
+                th_txs: "Txs",
+                th_hash: "Tx Hash",
+                th_type: "Transaction Type",
+                th_status: "Status",
+                btn_search: "Search",
+                btn_view_all: "View All →"
+            }
+        };
+
+        function switchLang(lang) {
+            // Metinleri Güncelle
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (languages[lang][key]) el.textContent = languages[lang][key];
+            });
+            // Placeholder'ları Güncelle
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (languages[lang][key]) el.setAttribute('placeholder', languages[lang][key]);
+            });
+            
+            // Buton Stillerini Güncelle (Aktif olanı vurgula)
+            if(lang === 'tr') {
+                document.getElementById('btn-tr').className = "text-xs font-bold px-3 py-1.5 rounded bg-slate-700 text-white transition-all shadow-sm";
+                document.getElementById('btn-en').className = "text-xs font-bold px-3 py-1.5 rounded text-slate-400 hover:text-white transition-all";
+            } else {
+                document.getElementById('btn-en').className = "text-xs font-bold px-3 py-1.5 rounded bg-slate-700 text-white transition-all shadow-sm";
+                document.getElementById('btn-tr').className = "text-xs font-bold px-3 py-1.5 rounded text-slate-400 hover:text-white transition-all";
+            }
+        }
+        
+        // ZeycaNode'a Özel Örnek Veriler (Mock Data)
+        const mockBlocks = [
+            { h: "2849104", p: "gno1zeyca..x9p", t: "3", time: "12 sn önce" },
+            { h: "2849103", p: "gno1alat..z7n", t: "1", time: "14 sn önce" },
+            { h: "2849102", p: "gno1node..q3m", t: "0", time: "16 sn önce" },
+            { h: "2849101", p: "gno1val..w2k", t: "5", time: "18 sn önce" }
+        ];
+        
+        const mockTxs = [
+            { hash: "0x4a9b...2f8c", type: "vm.Call", status: "Başarılı" },
+            { hash: "0x9c3e...1a7d", type: "bank.Send", status: "Başarılı" },
+            { hash: "0x1d7f...5b2e", type: "staking.Delegate", status: "Başarılı" },
+            { hash: "0x8e2a...9c1b", type: "vm.Call", status: "Başarısız" }
+        ];
+
+        // Tabloları Doldur
+        document.getElementById('blocks-tbody').innerHTML = mockBlocks.map(b => 
+            `<tr class="hover:bg-slate-800/40 transition-colors group">
+                <td class="p-4 text-zinc-300 font-mono flex items-center">
+                    <div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center mr-3 group-hover:bg-slate-700 transition-colors">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    </div>
+                    ${b.h}
+                </td>
+                <td class="p-4 font-mono text-zinc-400">
+                    <a href="#" class="hover:text-white transition-colors">${b.p}</a>
+                    <div class="text-[10px] text-slate-500 font-sans mt-0.5">${b.time}</div>
+                </td>
+                <td class="p-4 font-mono text-right text-zinc-300">${b.t}</td>
+            </tr>`
+        ).join('');
+
+        document.getElementById('txs-tbody').innerHTML = mockTxs.map(t => {
+            const statusColor = t.status === 'Başarılı' ? 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20' : 'text-red-400 bg-red-400/10 border-red-400/20';
+            const statusDot = t.status === 'Başarılı' ? 'bg-emerald-400' : 'bg-red-400';
+            
+            return `<tr class="hover:bg-slate-800/40 transition-colors">
+                <td class="p-4 text-zinc-300 font-mono">
+                    <a href="#" class="hover:text-white transition-colors">${t.hash}</a>
+                </td>
+                <td class="p-4">
+                    <span class="bg-slate-800 border border-slate-700 text-zinc-300 px-2.5 py-1 rounded text-xs font-mono">${t.type}</span>
+                </td>
+                <td class="p-4 text-right">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium border ${statusColor}">
+                        <span class="w-1.5 h-1.5 ${statusDot} rounded-full mr-1.5"></span>
+                        <span class="status-text">${t.status}</span>
+                    </span>
+                </td>
+            </tr>`;
+        }).join('');
+    </script>
+</body>
+</html>
