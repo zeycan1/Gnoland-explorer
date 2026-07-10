@@ -3,176 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZeycaNode | Gnoland Testnet-13 Explorer</title>
+    <title>ZeycaNode | Gnoland Explorer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-        
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        body { background-color: #0f172a; color: #f8fafc; font-family: sans-serif; }
         .card-bg { background-color: #1e293b; border: 1px solid #334155; }
-        .glass-header { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid #334155; }
-        
-        /* Tab Geçişleri İçin Sınıflar */
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .nav-link { color: #94a3b8; transition: all 0.3s ease; }
-        .nav-link:hover { color: #f4f4f5; }
-        .nav-link.active { color: #f4f4f5; border-bottom: 2px solid #10b981; }
-        
-        /* Özel Scrollbar */
-        ::-webkit-scrollbar { height: 8px; width: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
-    <nav class="glass-header sticky top-0 z-50 px-6 py-4">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center space-x-3">
-                <svg viewBox="0 0 100 100" class="w-10 h-10 drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="100" height="100" rx="12" fill="#050505"/>
-                    <path d="M20 20 H80 V42 L48 42 L20 68 V20 Z" fill="#FFFFFF"/>
-                    <path d="M80 80 H20 V58 L52 58 L80 32 V80 Z" fill="#FFFFFF"/>
-                </svg>
-                <div class="flex flex-col">
-                    <span class="text-xl font-bold tracking-tight text-white">Zeyca<span class="text-zinc-400">Node</span></span>
-                    <span class="text-[10px] font-mono text-zinc-400 tracking-widest uppercase">Gnoland Explorer</span>
-                </div>
-                <span class="ml-4 text-xs bg-zinc-800 border border-zinc-700 text-zinc-300 px-2.5 py-0.5 rounded-full font-mono flex items-center shadow-sm">
-                    <span id="connection-dot" class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
-                    Testnet-13
-                </span>
-            </div>
-
-            <div class="flex space-x-6 text-sm font-semibold">
-                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-link active pb-1" data-i18n="nav_dashboard">Dashboard</button>
-                <button onclick="switchTab('validators')" id="tab-validators" class="nav-link pb-1" data-i18n="nav_validators">Validatörler</button>
-                <button onclick="switchTab('peers')" id="tab-peers" class="nav-link pb-1" data-i18n="nav_peers">Live Peers</button>
-            </div>
-
-            <div class="flex items-center space-x-3 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
-                <button onclick="switchLang('tr')" id="btn-tr" class="text-xs font-bold px-3 py-1.5 rounded bg-slate-700 text-white transition-all shadow-sm">TR</button>
-                <button onclick="switchLang('en')" id="btn-en" class="text-xs font-bold px-3 py-1.5 rounded text-slate-400 hover:text-white transition-all">EN</button>
-            </div>
-        </div>
-    </nav>
-
-    <main class="flex-grow max-w-7xl mx-auto px-6 py-8 w-full">
-        <div class="mb-8">
-            <div class="card-bg rounded-2xl p-2 flex items-center shadow-lg focus-within:border-zinc-400 transition-colors duration-300">
-                <svg class="w-6 h-6 text-slate-400 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                <input type="text" id="search-input" data-i18n-placeholder="search_placeholder" placeholder="Blok Yüksekliği, Hash veya Adres Ara..." class="w-full bg-transparent border-none px-4 py-3 text-sm focus:outline-none focus:ring-0 text-white placeholder-slate-500 font-mono">
-                <button class="bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors" data-i18n="btn_search">Ara</button>
-            </div>
-        </div>
-
+<body class="p-8">
+    <div class="max-w-7xl mx-auto">
         <div id="view-dashboard" class="tab-content active">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="card-bg p-6 rounded-2xl">
-                    <div class="text-xs text-slate-400 font-medium tracking-wide uppercase" data-i18n="stat_height">Ağ Yüksekliği</div>
-                    <div class="text-3xl font-bold text-white mt-2 font-mono tracking-tight" id="live-height">Yükleniyor...</div>
-                </div>
-                <div class="card-bg p-6 rounded-2xl">
-                    <div class="text-xs text-slate-400 font-medium tracking-wide uppercase" data-i18n="stat_network">Ağ ID</div>
-                    <div class="text-3xl font-bold text-emerald-400 mt-2 font-mono tracking-tight" id="live-chain-id">Bağlanıyor...</div>
-                </div>
-                <div class="card-bg p-6 rounded-2xl">
-                    <div class="text-xs text-slate-400 font-medium tracking-wide uppercase" data-i18n="stat_validators">Toplam Validatör</div>
-                    <div class="text-3xl font-bold text-white mt-2 font-mono tracking-tight" id="live-val-count">0</div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="card-bg rounded-2xl flex flex-col overflow-hidden">
-                    <div class="px-6 py-5 border-b border-slate-700 bg-slate-800/30 flex justify-between">
-                        <h2 class="text-lg font-bold text-white m-0 flex items-center" data-i18n="title_blocks">Canlı Bloklar</h2>
-                        <span class="flex items-center text-xs text-emerald-400"><span class="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-ping"></span>Senkronize</span>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm text-slate-300">
-                            <thead class="text-xs text-slate-400 bg-slate-900/50 uppercase">
-                                <tr>
-                                    <th class="p-4" data-i18n="th_height">Yükseklik</th>
-                                    <th class="p-4" data-i18n="th_hash">Blok Hash</th>
-                                    <th class="p-4 text-right" data-i18n="th_txs">Tx</th>
-                                </tr>
-                            </thead>
-                            <tbody id="blocks-tbody" class="divide-y divide-slate-800">
-                                <tr><td colspan="3" class="p-4 text-center text-slate-500 font-mono">Veriler ağdan çekiliyor...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="card-bg rounded-2xl flex flex-col overflow-hidden">
-                    <div class="px-6 py-5 border-b border-slate-700 bg-slate-800/30">
-                        <h2 class="text-lg font-bold text-white m-0" data-i18n="title_txs">Son İşlemler</h2>
-                    </div>
-                    <div class="p-8 text-center text-slate-500 font-mono flex flex-col items-center">
-                        Txs end-point konfigürasyonu bekleniyor.
-                    </div>
-                </div>
+            <div class="grid grid-cols-3 gap-6 mb-8">
+                <div class="card-bg p-6 rounded-2xl"><div class="text-xs text-slate-400">AĞ YÜKSEKLİĞİ</div><div id="live-height" class="text-2xl font-bold mt-2">...</div></div>
+                <div class="card-bg p-6 rounded-2xl"><div class="text-xs text-slate-400">AĞ ID</div><div id="live-chain-id" class="text-2xl font-bold text-emerald-400 mt-2">...</div></div>
+                <div class="card-bg p-6 rounded-2xl"><div class="text-xs text-slate-400">VALIDATÖR</div><div id="live-val-count" class="text-2xl font-bold mt-2">0</div></div>
             </div>
         </div>
-
-        <div id="view-validators" class="tab-content">
-            <div class="card-bg rounded-2xl overflow-hidden">
-                <table class="w-full text-left text-sm text-slate-300">
-                    <thead class="text-xs text-slate-400 bg-slate-900/50 uppercase tracking-wider">
-                        <tr><th class="p-4">#</th><th class="p-4">Moniker</th><th class="p-4">Adres</th><th class="p-4 text-right">Güç</th></tr>
-                    </thead>
-                    <tbody id="validators-tbody" class="divide-y divide-slate-800"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="view-peers" class="tab-content">
-            <div class="card-bg rounded-2xl p-6">
-                <button onclick="copyPeers()" class="bg-emerald-600 px-4 py-2 rounded text-xs mb-4 font-bold">Kopyala</button>
-                <pre id="peer-list-code" class="text-emerald-400 font-mono text-xs whitespace-pre-wrap"></pre>
-            </div>
-        </div>
-    </main>
+    </div>
 
     <script>
-        const API_BASE = "https://gnolandexplorer.zeycanode.com";
-        let knownMonikers = {"g1alat...": "ZeycaNode"};
+        const API = "https://gnolandexplorer.zeycanode.com/rpc";
 
-        function switchTab(id) {
-            document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
-            document.querySelectorAll('.nav-link').forEach(e => e.classList.remove('active'));
-            document.getElementById('view-'+id).classList.add('active');
-            document.getElementById('tab-'+id).classList.add('active');
-        }
-
-        function switchLang(lang) {
-            // Dil değiştirme mantığın buraya gelecek
-        }
-
-        async function init() {
+        async function updateData() {
             try {
-                // Nginx'teki /rpc/ yönlendirmesiyle tam uyumlu:
-                const [status, vals, peers] = await Promise.all([
-                    (await fetch(`${API_BASE}/rpc/status`, {mode: 'cors'})).json(),
-                    (await fetch(`${API_BASE}/rpc/validators?per_page=100`, {mode: 'cors'})).json(),
-                    (await fetch(`${API_BASE}/rpc/net_info`, {mode: 'cors'})).json()
-                ]);
+                // Node'dan ham veriyi çek
+                const res = await fetch(`${API}/status`);
+                const json = await res.json();
+                
+                // Gnoland'in güncel veri yapısına göre veri yollarını burada güncelledim
+                const status = json.result.sync_info || json.result; 
+                const nodeInfo = json.result.node_info || {};
 
-                document.getElementById('live-height').textContent = "#" + parseInt(status.result.sync_info.latest_block_height).toLocaleString();
-                document.getElementById('live-chain-id').textContent = status.result.node_info.network;
-                document.getElementById('live-val-count').textContent = vals.result.validators.length;
+                document.getElementById('live-height').textContent = "#" + (status.latest_block_height || "0");
+                document.getElementById('live-chain-id').textContent = nodeInfo.network || "Unknown";
 
-                document.getElementById('validators-tbody').innerHTML = vals.result.validators.map((v, i) => 
-                    `<tr><td class="p-4">${i+1}</td><td class="p-4 font-bold">${knownMonikers[v.address] || 'Bilinmeyen'}</td><td class="p-4 font-mono text-xs">${v.address.substring(0,10)}...</td><td class="p-4 text-right">${parseInt(v.voting_power).toLocaleString()}</td></tr>`
-                ).join('');
+                const valRes = await fetch(`${API}/validators?per_page=100`);
+                const valJson = await valRes.json();
+                document.getElementById('live-val-count').textContent = valJson.result.validators.length;
 
-                document.getElementById('peer-list-code').textContent = peers.result.peers.map(p => `${p.node_info.id}@${p.remote_ip}:${p.node_info.listen_addr.split(':').pop()}`).join(',');
-            } catch(e) { console.error("Hata:", e); }
+            } catch (err) {
+                console.error("Veri çekme hatası:", err);
+            }
         }
-        init();
-        setInterval(init, 60000);
-        function copyPeers() { navigator.clipboard.writeText(document.getElementById('peer-list-code').textContent); alert("Kopyalandı!"); }
+        
+        updateData();
+        setInterval(updateData, 10000);
     </script>
 </body>
 </html>
