@@ -70,7 +70,7 @@
         </div>
 
         <div id="view-dashboard" class="tab-content active">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div class="card-bg p-6 rounded-2xl">
                     <div class="text-xs text-slate-400 font-medium tracking-wide uppercase" data-i18n="stat_height">Ağ Yüksekliği</div>
                     <div class="text-3xl font-bold text-white mt-2 font-mono tracking-tight" id="live-height">Yükleniyor...</div>
@@ -82,10 +82,6 @@
                 <div class="card-bg p-6 rounded-2xl">
                     <div class="text-xs text-slate-400 font-medium tracking-wide uppercase" data-i18n="stat_validators">Toplam Validatör</div>
                     <div class="text-3xl font-bold text-white mt-2 font-mono tracking-tight" id="live-val-count">0</div>
-                </div>
-                <div class="card-bg p-6 rounded-2xl">
-                    <div class="text-xs text-slate-400 font-medium tracking-wide uppercase" data-i18n="stat_node">Node Versiyonu</div>
-                    <div class="text-2xl font-bold text-zinc-300 mt-2 font-mono tracking-tight" id="live-node-version">v0.0.0</div>
                 </div>
             </div>
 
@@ -181,7 +177,7 @@
             tr: {
                 nav_dashboard: "Dashboard", nav_validators: "Validatörler", nav_peers: "Live Peers",
                 search_placeholder: "Blok Yüksekliği, Hash veya Adres Ara...", btn_search: "Ara", btn_copy: "Kopyala",
-                stat_height: "Ağ Yüksekliği", stat_network: "Ağ ID", stat_validators: "Toplam Validatör", stat_node: "Node Versiyonu",
+                stat_height: "Ağ Yüksekliği", stat_network: "Ağ ID", stat_validators: "Toplam Validatör",
                 title_blocks: "Canlı Bloklar", title_txs: "Son İşlemler", title_val_list: "Aktif Validatör Listesi", title_peers: "Live Peers (Aktif Node'lar)",
                 th_height: "Yükseklik", th_hash: "Blok Hash", th_txs: "Tx",
                 th_moniker: "Moniker (Node Adı)", th_address: "Hex Adresi", th_power: "Oy Gücü"
@@ -189,7 +185,7 @@
             en: {
                 nav_dashboard: "Dashboard", nav_validators: "Validators", nav_peers: "Live Peers",
                 search_placeholder: "Search Block Height, Hash or Address...", btn_search: "Search", btn_copy: "Copy",
-                stat_height: "Network Height", stat_network: "Chain ID", stat_validators: "Total Validators", stat_node: "Node Version",
+                stat_height: "Network Height", stat_network: "Chain ID", stat_validators: "Total Validators",
                 title_blocks: "Live Blocks", title_txs: "Latest Transactions", title_val_list: "Active Validator List", title_peers: "Live Peers",
                 th_height: "Height", th_hash: "Block Hash", th_txs: "Tx",
                 th_moniker: "Moniker", th_address: "Hex Address", th_power: "Voting Power"
@@ -218,7 +214,8 @@
             alert("Live Peers listesi panoya kopyalandı!");
         }
 
-        const RPC_URL = "https://rpc.test13.testnets.gno.land"; 
+        // ================= KENDİ SUNUCUNUN IP VE PORTU =================
+        const RPC_URL = "http://185.16.39.172:54657"; 
         
         let latestBlocks = [];
         let peerMonikerMap = {}; 
@@ -239,7 +236,8 @@
                           });
                       }
                  }
-                 // Sabit Özel Kayıtlar
+                 
+                 // ZeycaNode'u mutlaka ekliyoruz
                  knownMonikers["g1alat..."] = "ZeycaNode";
             } catch (e) {
                  console.log("Genesis json çekilemedi, lokal sözlük kullanılacak.", e);
@@ -265,8 +263,6 @@
                         
                         if(p.node_info.moniker) {
                             peerMonikerMap[p.node_info.id] = p.node_info.moniker;
-                            // Ekstra olarak knownMonikers objesini de güncelliyoruz ki validatörlerde de çıksın
-                            // Not: Peer id ile validator address aynı değildir, ama isim havuzuna katkı sağlar.
                         }
                     });
 
@@ -276,14 +272,13 @@
                 }
             } catch (error) {
                 console.error("RPC Peers Hatası:", error);
-                document.getElementById('peer-list-code').textContent = "Peer verisi çekilemedi. RPC yanıt vermiyor olabilir.";
+                document.getElementById('peer-list-code').textContent = "Bağlantı hatası: Tarayıcınız güvenlik (CORS / Mixed Content) sebebiyle isteği reddetmiş olabilir.";
             }
         }
 
         // Validatörleri Çekme Fonksiyonu
         async function fetchValidators() {
             try {
-                // Eğer moniker sözlüğü boşsa önce gidip doldurmaya çalış
                 if(Object.keys(knownMonikers).length === 0){
                     await fetchMonikers();
                 }
@@ -332,7 +327,7 @@
                     const status = data.result;
                     document.getElementById('live-height').textContent = "#" + parseInt(status.sync_info.latest_block_height).toLocaleString();
                     document.getElementById('live-chain-id').textContent = status.node_info.network;
-                    document.getElementById('live-node-version').textContent = status.node_info.version;
+                    
                     document.getElementById('connection-dot').classList.replace('bg-red-500', 'bg-emerald-500');
                     
                     const height = status.sync_info.latest_block_height;
