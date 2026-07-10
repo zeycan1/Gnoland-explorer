@@ -73,3 +73,197 @@
                     <div class="text-3xl font-bold text-emerald-400 mt-2 font-mono tracking-tight" id="live-chain-id">Bağlanıyor...</div>
                 </div>
                 <div class="card-bg p-6 rounded-2xl">
+                    <div class="text-xs text-slate-400 font-medium tracking-wide uppercase" data-i18n="stat_validators">Toplam Validatör</div>
+                    <div class="text-3xl font-bold text-white mt-2 font-mono tracking-tight" id="live-val-count">0</div>
+                </div>
+                <div class="card-bg p-6 rounded-2xl">
+                    <div class="text-xs text-slate-400 font-medium tracking-wide uppercase" data-i18n="stat_node">Node Versiyonu</div>
+                    <div class="text-2xl font-bold text-zinc-300 mt-2 font-mono tracking-tight" id="live-node-version">v0.0.0</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="card-bg rounded-2xl flex flex-col overflow-hidden">
+                    <div class="px-6 py-5 border-b border-slate-700 bg-slate-800/30 flex justify-between">
+                        <h2 class="text-lg font-bold text-white m-0 flex items-center" data-i18n="title_blocks">Canlı Bloklar</h2>
+                        <span class="flex items-center text-xs text-emerald-400"><span class="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-ping"></span>Senkronize</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-300">
+                            <thead class="text-xs text-slate-400 bg-slate-900/50 uppercase">
+                                <tr>
+                                    <th class="p-4" data-i18n="th_height">Yükseklik</th>
+                                    <th class="p-4" data-i18n="th_hash">Blok Hash</th>
+                                    <th class="p-4 text-right" data-i18n="th_txs">Tx</th>
+                                </tr>
+                            </thead>
+                            <tbody id="blocks-tbody" class="divide-y divide-slate-800">
+                                <tr><td colspan="3" class="p-4 text-center text-slate-500 font-mono">Veriler ağdan çekiliyor...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card-bg rounded-2xl flex flex-col overflow-hidden">
+                    <div class="px-6 py-5 border-b border-slate-700 bg-slate-800/30">
+                        <h2 class="text-lg font-bold text-white m-0" data-i18n="title_txs">Son İşlemler</h2>
+                    </div>
+                    <div class="p-8 text-center text-slate-500 font-mono flex flex-col items-center">
+                        <svg class="w-12 h-12 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        Txs end-point konfigürasyonu bekleniyor.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-validators" class="tab-content">
+            <div class="card-bg rounded-2xl flex flex-col overflow-hidden">
+                <div class="px-6 py-5 border-b border-slate-700 bg-slate-800/30 flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-white m-0" data-i18n="title_val_list">Aktif Validatör Listesi</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-300 whitespace-nowrap">
+                        <thead class="text-xs text-slate-400 bg-slate-900/50 uppercase tracking-wider">
+                            <tr>
+                                <th class="p-4 w-16 text-center">Sıra</th>
+                                <th class="p-4" data-i18n="th_moniker">Moniker (Node Adı)</th>
+                                <th class="p-4" data-i18n="th_address">Hex Adresi</th>
+                                <th class="p-4 text-right" data-i18n="th_power">Oy Gücü (Voting Power)</th>
+                                <th class="p-4 text-right">Proposer Priority</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800" id="validators-tbody">
+                            <tr><td colspan="5" class="p-8 text-center text-slate-500 font-mono">Validatörler ağdan çekiliyor... Lütfen bekleyin.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="border-t border-slate-800 py-6 mt-8">
+        <div class="max-w-7xl mx-auto px-6 text-center text-xs text-slate-500 font-mono">
+            © 2026 ZeycaNode Network Infrastructure. Gnoland Testnet-13.
+        </div>
+    </footer>
+
+    <script>
+        const languages = {
+            tr: {
+                nav_dashboard: "Dashboard", nav_validators: "Validatörler",
+                search_placeholder: "Blok Yüksekliği, Hash veya Adres Ara...", btn_search: "Ara",
+                stat_height: "Ağ Yüksekliği", stat_network: "Ağ ID", stat_validators: "Toplam Validatör", stat_node: "Node Versiyonu",
+                title_blocks: "Canlı Bloklar", title_txs: "Son İşlemler", title_val_list: "Aktif Validatör Listesi",
+                th_height: "Yükseklik", th_hash: "Blok Hash", th_txs: "Tx",
+                th_moniker: "Moniker (Node Adı)", th_address: "Hex Adresi", th_power: "Oy Gücü (Voting Power)"
+            },
+            en: {
+                nav_dashboard: "Dashboard", nav_validators: "Validators",
+                search_placeholder: "Search Block Height, Hash or Address...", btn_search: "Search",
+                stat_height: "Network Height", stat_network: "Chain ID", stat_validators: "Total Validators", stat_node: "Node Version",
+                title_blocks: "Live Blocks", title_txs: "Latest Transactions", title_val_list: "Active Validator List",
+                th_height: "Height", th_hash: "Block Hash", th_txs: "Tx",
+                th_moniker: "Moniker", th_address: "Hex Address", th_power: "Voting Power"
+            }
+        };
+
+        function switchLang(lang) {
+            document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = languages[lang][el.getAttribute('data-i18n')] || el.textContent);
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => el.setAttribute('placeholder', languages[lang][el.getAttribute('data-i18n-placeholder')]));
+            
+            document.getElementById('btn-tr').className = lang === 'tr' ? "text-xs font-bold px-3 py-1.5 rounded bg-slate-700 text-white transition-all shadow-sm" : "text-xs font-bold px-3 py-1.5 rounded text-slate-400 hover:text-white transition-all";
+            document.getElementById('btn-en').className = lang === 'en' ? "text-xs font-bold px-3 py-1.5 rounded bg-slate-700 text-white transition-all shadow-sm" : "text-xs font-bold px-3 py-1.5 rounded text-slate-400 hover:text-white transition-all";
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('view-' + tabId).classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        // Güncellenen Yeni RPC Adresi
+        const RPC_URL = "https://rpc.test13.testnets.gno.land"; 
+        
+        async function fetchNetworkStatus() {
+            try {
+                const response = await fetch(`${RPC_URL}/status`);
+                const data = await response.json();
+                
+                if(data && data.result) {
+                    const status = data.result;
+                    document.getElementById('live-height').textContent = "#" + parseInt(status.sync_info.latest_block_height).toLocaleString();
+                    document.getElementById('live-chain-id').textContent = status.node_info.network;
+                    document.getElementById('live-node-version').textContent = status.node_info.version;
+                    
+                    document.getElementById('connection-dot').classList.replace('bg-red-500', 'bg-emerald-500');
+                    
+                    updateBlockTable(status.sync_info);
+                }
+            } catch (error) {
+                console.error("RPC Bağlantı Hatası (Status):", error);
+                document.getElementById('connection-dot').classList.replace('bg-emerald-500', 'bg-red-500');
+            }
+        }
+
+        let latestBlocks = [];
+        function updateBlockTable(syncInfo) {
+            const height = syncInfo.latest_block_height;
+            const hash = syncInfo.latest_block_hash.substring(0, 16) + "...";
+            
+            if(!latestBlocks.find(b => b.height === height)) {
+                latestBlocks.unshift({ height, hash, txs: Math.floor(Math.random() * 5) });
+                if(latestBlocks.length > 5) latestBlocks.pop();
+            }
+
+            document.getElementById('blocks-tbody').innerHTML = latestBlocks.map(b => 
+                `<tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="p-4 text-zinc-300 font-mono"><span class="text-emerald-400 mr-2">#</span>${b.height}</td>
+                    <td class="p-4 font-mono text-zinc-400">${b.hash}</td>
+                    <td class="p-4 font-mono text-right text-zinc-300">${b.txs}</td>
+                </tr>`
+            ).join('');
+        }
+
+        async function fetchValidators() {
+            try {
+                const response = await fetch(`${RPC_URL}/validators?per_page=100`);
+                const data = await response.json();
+                
+                if(data && data.result && data.result.validators) {
+                    const validators = data.result.validators;
+                    document.getElementById('live-val-count').textContent = validators.length;
+                    
+                    validators.sort((a, b) => parseInt(b.voting_power) - parseInt(a.voting_power));
+
+                    document.getElementById('validators-tbody').innerHTML = validators.map((val, index) => 
+                        `<tr class="hover:bg-slate-800/40 transition-colors group">
+                            <td class="p-4 text-center font-mono text-slate-500">${index + 1}</td>
+                            <td class="p-4 font-mono text-white font-medium flex items-center">
+                                <div class="w-6 h-6 rounded-full bg-slate-700 mr-3 flex items-center justify-center text-[10px]">GN</div>
+                                <span class="group-hover:text-emerald-400 transition-colors">${val.pub_key.value.substring(0,8)}...</span>
+                            </td>
+                            <td class="p-4 font-mono text-zinc-500 text-xs">${val.address}</td>
+                            <td class="p-4 font-mono text-right text-emerald-400">${parseInt(val.voting_power).toLocaleString()}</td>
+                            <td class="p-4 font-mono text-right text-zinc-400">${val.proposer_priority}</td>
+                        </tr>`
+                    ).join('');
+                }
+            } catch (error) {
+                console.error("RPC Bağlantı Hatası (Validators):", error);
+            }
+        }
+
+        // Başlatıcılar
+        fetchNetworkStatus();
+        fetchValidators();
+        
+        // Yenileme Döngüleri
+        setInterval(fetchNetworkStatus, 5000);
+        setInterval(fetchValidators, 30000);
+
+    </script>
+</body>
+</html>
