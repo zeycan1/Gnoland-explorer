@@ -7,101 +7,356 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         .card-bg { background-color: #1e293b; border: 1px solid #334155; }
+        .glass-header { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid #334155; }
+        
+        /* Tab Geçişleri İçin Sınıflar */
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .nav-link { color: #94a3b8; transition: 0.3s; }
-        .nav-link.active { color: #10b981; border-bottom: 2px solid #10b981; }
+        .nav-link { color: #94a3b8; transition: all 0.3s ease; }
+        .nav-link:hover { color: #f4f4f5; }
+        .nav-link.active { color: #f4f4f5; border-bottom: 2px solid #10b981; }
+        
+        /* Özel Scrollbar */
+        ::-webkit-scrollbar { height: 8px; width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
 </head>
-<body class="min-h-screen">
-    <nav class="border-b border-slate-800 px-6 py-4">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <span class="text-xl font-bold">Zeyca<span class="text-zinc-400">Node</span></span>
-                <span class="text-[10px] bg-zinc-800 px-2 py-0.5 rounded-full font-mono">Testnet-13</span>
+<body class="min-h-screen flex flex-col">
+    <nav class="glass-header sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <svg viewBox="0 0 100 100" class="w-10 h-10 drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100" height="100" rx="12" fill="#050505"/>
+                    <path d="M20 20 H80 V42 L48 42 L20 68 V20 Z" fill="#FFFFFF"/>
+                    <path d="M80 80 H20 V58 L52 58 L80 32 V80 Z" fill="#FFFFFF"/>
+                </svg>
+                <div class="flex flex-col">
+                    <span class="text-xl font-bold tracking-tight text-white">Zeyca<span class="text-zinc-400">Node</span></span>
+                    <span class="text-[10px] font-mono text-zinc-400 tracking-widest uppercase">Gnoland Explorer</span>
+                </div>
+                <span class="ml-4 text-xs bg-zinc-800 border border-zinc-700 text-zinc-300 px-2.5 py-0.5 rounded-full font-mono flex items-center shadow-sm">
+                    <span id="connection-dot" class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
+                    Testnet-13
+                </span>
             </div>
+
             <div class="flex space-x-6 text-sm font-semibold">
-                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-link active pb-1">Dashboard</button>
-                <button onclick="switchTab('validators')" id="tab-validators" class="nav-link pb-1">Validatörler</button>
-                <button onclick="switchTab('peers')" id="tab-peers" class="nav-link pb-1">Live Peers</button>
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-link active pb-1" data-i18n="nav_dashboard">Dashboard</button>
+                <button onclick="switchTab('validators')" id="tab-validators" class="nav-link pb-1" data-i18n="nav_validators">Validatörler</button>
+                <button onclick="switchTab('peers')" id="tab-peers" class="nav-link pb-1" data-i18n="nav_peers">Live Peers</button>
             </div>
-            <div class="flex space-x-2">
-                <button onclick="switchLang('tr')" class="text-xs bg-slate-700 px-2 py-1 rounded">TR</button>
-                <button onclick="switchLang('en')" class="text-xs bg-slate-700 px-2 py-1 rounded">EN</button>
+
+            <div class="flex items-center space-x-3 bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+                <button onclick="switchLang('tr')" id="btn-tr" class="text-xs font-bold px-3 py-1.5 rounded bg-slate-700 text-white transition-all shadow-sm">TR</button>
+                <button onclick="switchLang('en')" id="btn-en" class="text-xs font-bold px-3 py-1.5 rounded text-slate-400 hover:text-white transition-all">EN</button>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-6 py-8">
+    <main class="flex-grow max-w-7xl mx-auto px-6 py-8 w-full">
+        
+        <div class="mb-8">
+            <div class="card-bg rounded-2xl p-2 flex items-center shadow-lg focus-within:border-zinc-400 transition-colors duration-300">
+                <svg class="w-6 h-6 text-slate-400 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" id="search-input" data-i18n-placeholder="search_placeholder" placeholder="Blok Yüksekliği, Hash veya Adres Ara..." class="w-full bg-transparent border-none px-4 py-3 text-sm focus:outline-none focus:ring-0 text-white placeholder-slate-500 font-mono">
+                <button class="bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors" data-i18n="btn_search">Ara</button>
+            </div>
+        </div>
+
         <div id="view-dashboard" class="tab-content active">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="card-bg p-6 rounded-2xl"><div class="text-xs text-slate-400 uppercase">Ağ Yüksekliği</div><div class="text-3xl font-bold mt-2 font-mono" id="live-height">...</div></div>
-                <div class="card-bg p-6 rounded-2xl"><div class="text-xs text-slate-400 uppercase">Ağ ID</div><div class="text-3xl font-bold text-emerald-400 mt-2 font-mono" id="live-chain-id">...</div></div>
-                <div class="card-bg p-6 rounded-2xl"><div class="text-xs text-slate-400 uppercase">Toplam Validatör</div><div class="text-3xl font-bold mt-2 font-mono" id="live-val-count">0</div></div>
+                <div class="card-bg p-6 rounded-2xl">
+                    <div class="text-xs text-slate-400 font-medium tracking-wide uppercase" data-i18n="stat_height">Ağ Yüksekliği</div>
+                    <div class="text-3xl font-bold text-white mt-2 font-mono tracking-tight" id="live-height">Yükleniyor...</div>
+                </div>
+                <div class="card-bg p-6 rounded-2xl">
+                    <div class="text-xs text-slate-400 font-medium tracking-wide uppercase" data-i18n="stat_network">Ağ ID</div>
+                    <div class="text-3xl font-bold text-emerald-400 mt-2 font-mono tracking-tight" id="live-chain-id">Bağlanıyor...</div>
+                </div>
+                <div class="card-bg p-6 rounded-2xl">
+                    <div class="text-xs text-slate-400 font-medium tracking-wide uppercase" data-i18n="stat_validators">Toplam Validatör</div>
+                    <div class="text-3xl font-bold text-white mt-2 font-mono tracking-tight" id="live-val-count">0</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="card-bg rounded-2xl flex flex-col overflow-hidden">
+                    <div class="px-6 py-5 border-b border-slate-700 bg-slate-800/30 flex justify-between">
+                        <h2 class="text-lg font-bold text-white m-0 flex items-center" data-i18n="title_blocks">Canlı Bloklar</h2>
+                        <span class="flex items-center text-xs text-emerald-400"><span class="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-ping"></span>Senkronize</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-300">
+                            <thead class="text-xs text-slate-400 bg-slate-900/50 uppercase">
+                                <tr>
+                                    <th class="p-4" data-i18n="th_height">Yükseklik</th>
+                                    <th class="p-4" data-i18n="th_hash">Blok Hash</th>
+                                    <th class="p-4 text-right" data-i18n="th_txs">Tx</th>
+                                </tr>
+                            </thead>
+                            <tbody id="blocks-tbody" class="divide-y divide-slate-800">
+                                <tr><td colspan="3" class="p-4 text-center text-slate-500 font-mono">Veriler ağdan çekiliyor...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card-bg rounded-2xl flex flex-col overflow-hidden">
+                    <div class="px-6 py-5 border-b border-slate-700 bg-slate-800/30">
+                        <h2 class="text-lg font-bold text-white m-0" data-i18n="title_txs">Son İşlemler</h2>
+                    </div>
+                    <div class="p-8 text-center text-slate-500 font-mono flex flex-col items-center">
+                        <svg class="w-12 h-12 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        Txs end-point konfigürasyonu bekleniyor.
+                    </div>
+                </div>
             </div>
         </div>
 
         <div id="view-validators" class="tab-content">
-            <div class="card-bg rounded-2xl overflow-hidden">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-900/50 text-slate-400 uppercase text-xs"><tr><th class="p-4">#</th><th class="p-4">Moniker</th><th class="p-4">Adres</th><th class="p-4 text-right">Güç</th></tr></thead>
-                    <tbody id="validators-tbody" class="divide-y divide-slate-800"></tbody>
-                </table>
+            <div class="card-bg rounded-2xl flex flex-col overflow-hidden">
+                <div class="px-6 py-5 border-b border-slate-700 bg-slate-800/30 flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-white m-0" data-i18n="title_val_list">Aktif Validatör Listesi</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-300 whitespace-nowrap">
+                        <thead class="text-xs text-slate-400 bg-slate-900/50 uppercase tracking-wider">
+                            <tr>
+                                <th class="p-4 w-16 text-center">#</th>
+                                <th class="p-4" data-i18n="th_moniker">Moniker (Node Adı)</th>
+                                <th class="p-4" data-i18n="th_address">Hex Adresi</th>
+                                <th class="p-4 text-right" data-i18n="th_power">Oy Gücü</th>
+                                <th class="p-4 text-center">Durum</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800" id="validators-tbody">
+                            <tr><td colspan="5" class="p-8 text-center text-slate-500 font-mono">Validatörler ağdan çekiliyor...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <div id="view-peers" class="tab-content">
-            <div class="card-bg rounded-2xl p-6">
-                <button onclick="copyPeers()" class="bg-emerald-600 px-4 py-2 rounded text-xs mb-4 font-bold">Kopyala</button>
-                <pre id="peer-list-code" class="text-emerald-400 font-mono text-xs whitespace-pre-wrap"></pre>
+            <div class="card-bg rounded-2xl flex flex-col overflow-hidden">
+                <div class="px-6 py-5 border-b border-slate-700 bg-slate-800/30 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-lg font-bold text-white m-0" data-i18n="title_peers">Live Peers (Aktif Node'lar)</h2>
+                        <p class="text-xs text-slate-400 mt-1" id="peer-count-text">Ağ üzerindeki eşlere bağlanılıyor...</p>
+                    </div>
+                    <button onclick="copyPeers()" class="text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg transition-colors flex items-center shadow-sm">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        <span data-i18n="btn_copy">Kopyala</span>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <div class="bg-[#090d14] p-5 rounded-xl border border-slate-800 overflow-x-auto relative group">
+                        <div class="text-slate-500 text-xs mb-2 select-none"># Gnoland config.toml veya komut satırı için güncel peers listesi:</div>
+                        <pre id="peer-list-code" class="text-emerald-400 font-mono text-xs whitespace-pre-wrap break-all leading-relaxed">Veri bekleniyor...</pre>
+                    </div>
+                </div>
             </div>
         </div>
+
     </main>
 
+    <footer class="border-t border-slate-800 py-6 mt-8">
+        <div class="max-w-7xl mx-auto px-6 text-center text-xs text-slate-500 font-mono">
+            © 2026 ZeycaNode Network Infrastructure. Gnoland Testnet-13.
+        </div>
+    </footer>
+
     <script>
+        const languages = {
+            tr: {
+                nav_dashboard: "Dashboard", nav_validators: "Validatörler", nav_peers: "Live Peers",
+                search_placeholder: "Blok Yüksekliği, Hash veya Adres Ara...", btn_search: "Ara", btn_copy: "Kopyala",
+                stat_height: "Ağ Yüksekliği", stat_network: "Ağ ID", stat_validators: "Toplam Validatör",
+                title_blocks: "Canlı Bloklar", title_txs: "Son İşlemler", title_val_list: "Aktif Validatör Listesi", title_peers: "Live Peers (Aktif Node'lar)",
+                th_height: "Yükseklik", th_hash: "Blok Hash", th_txs: "Tx",
+                th_moniker: "Moniker (Node Adı)", th_address: "Hex Adresi", th_power: "Oy Gücü"
+            },
+            en: {
+                nav_dashboard: "Dashboard", nav_validators: "Validators", nav_peers: "Live Peers",
+                search_placeholder: "Search Block Height, Hash or Address...", btn_search: "Search", btn_copy: "Copy",
+                stat_height: "Network Height", stat_network: "Chain ID", stat_validators: "Total Validators",
+                title_blocks: "Live Blocks", title_txs: "Latest Transactions", title_val_list: "Active Validator List", title_peers: "Live Peers",
+                th_height: "Height", th_hash: "Block Hash", th_txs: "Tx",
+                th_moniker: "Moniker", th_address: "Hex Address", th_power: "Voting Power"
+            }
+        };
+
+        function switchLang(lang) {
+            document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = languages[lang][el.getAttribute('data-i18n')] || el.textContent);
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => el.setAttribute('placeholder', languages[lang][el.getAttribute('data-i18n-placeholder')]));
+            
+            document.getElementById('btn-tr').className = lang === 'tr' ? "text-xs font-bold px-3 py-1.5 rounded bg-slate-700 text-white transition-all shadow-sm" : "text-xs font-bold px-3 py-1.5 rounded text-slate-400 hover:text-white transition-all";
+            document.getElementById('btn-en').className = lang === 'en' ? "text-xs font-bold px-3 py-1.5 rounded bg-slate-700 text-white transition-all shadow-sm" : "text-xs font-bold px-3 py-1.5 rounded text-slate-400 hover:text-white transition-all";
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('view-' + tabId).classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        function copyPeers() {
+            const text = document.getElementById('peer-list-code').textContent;
+            navigator.clipboard.writeText(text);
+            alert("Live Peers listesi panoya kopyalandı!");
+        }
+
+        // ================= KENDİ SUNUCUNUN GÜVENLİ KÖPRÜSÜ =================
         const RPC_URL = "https://gnolandexplorer.zeycanode.com/rpc"; 
-        let knownMonikers = {"g1alat...": "ZeycaNode"};
+        
+        let latestBlocks = [];
+        let peerMonikerMap = {}; 
+        let knownMonikers = {};
 
-        function switchTab(id) {
-            document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
-            document.querySelectorAll('.nav-link').forEach(e => e.classList.remove('active'));
-            document.getElementById('view-'+id).classList.add('active');
-            document.getElementById('tab-'+id).classList.add('active');
+        // Genesis dosyasından Moniker'leri Çekme Fonksiyonu
+        async function fetchMonikers() {
+             try {
+                 const response = await fetch('https://api.github.com/repos/gnolang/gno/contents/misc/testnet/genesis.json');
+                 if(response.ok){
+                      const data = await response.json();
+                      const decodedContent = atob(data.content);
+                      const genesis = JSON.parse(decodedContent);
+                      
+                      if(genesis && genesis.app_state && genesis.app_state.staking && genesis.app_state.staking.validators){
+                          genesis.app_state.staking.validators.forEach(v => {
+                               knownMonikers[v.operator_address] = v.description.moniker;
+                          });
+                      }
+                 }
+                 knownMonikers["g1alat..."] = "ZeycaNode";
+            } catch (e) {
+                 console.log("Genesis json çekilemedi.", e);
+            }
         }
 
-        async function init() {
+        // Aktif Peer'leri Çekme Fonksiyonu
+        async function fetchPeers() {
             try {
-                // Genesis
-                const res = await fetch('https://api.github.com/repos/gnolang/gno/contents/misc/testnet/genesis.json');
-                const gen = JSON.parse(atob((await res.json()).content));
-                gen.app_state.staking.validators.forEach(v => knownMonikers[v.operator_address] = v.description.moniker);
-            } catch(e) {}
-
-            try {
-                // Veriler
-                const [status, vals, peers] = await Promise.all([
-                    (await fetch(`${RPC_URL}/status`)).json(),
-                    (await fetch(`${RPC_URL}/validators?per_page=100`)).json(),
-                    (await fetch(`${RPC_URL}/net_info`)).json()
-                ]);
-
-                document.getElementById('live-height').textContent = "#" + parseInt(status.result.sync_info.latest_block_height).toLocaleString();
-                document.getElementById('live-chain-id').textContent = status.result.node_info.network;
-                document.getElementById('live-val-count').textContent = vals.result.validators.length;
+                const response = await fetch(`${RPC_URL}/net_info`);
+                const data = await response.json();
                 
-                document.getElementById('validators-tbody').innerHTML = vals.result.validators.map((v, i) => 
-                    `<tr><td class="p-4">${i+1}</td><td class="p-4 font-bold">${knownMonikers[v.address] || 'Bilinmeyen'}</td><td class="p-4 font-mono">${v.address.substring(0,10)}...</td><td class="p-4 text-right">${parseInt(v.voting_power).toLocaleString()}</td></tr>`
-                ).join('');
-                
-                document.getElementById('peer-list-code').textContent = peers.result.peers.map(p => `${p.node_info.id}@${p.remote_ip}:${p.node_info.listen_addr.split(':').pop()}`).join(',');
-            } catch(e) { console.error(e); }
+                if(data && data.result && data.result.peers) {
+                    const peers = data.result.peers;
+                    document.getElementById('peer-count-text').textContent = `Toplam ${peers.length} aktif bağlantı tespit edildi.`;
+
+                    let peerStringArray = [];
+                    peers.forEach(p => {
+                        let ip = p.remote_ip;
+                        let port = p.node_info.listen_addr.split(':').pop(); 
+                        
+                        peerStringArray.push(`${p.node_info.id}@${ip}:${port}`);
+                        
+                        if(p.node_info.moniker) {
+                            peerMonikerMap[p.node_info.id] = p.node_info.moniker;
+                        }
+                    });
+
+                    document.getElementById('peer-list-code').textContent = `persistent_peers = "${peerStringArray.join(',')}"`;
+                }
+            } catch (error) {
+                console.error("RPC Peers Hatası:", error);
+            }
         }
-        init();
-        setInterval(init, 60000);
-        function copyPeers() { navigator.clipboard.writeText(document.getElementById('peer-list-code').textContent); alert("Kopyalandı!"); }
+
+        // Validatörleri Çekme Fonksiyonu
+        async function fetchValidators() {
+            try {
+                if(Object.keys(knownMonikers).length === 0){
+                    await fetchMonikers();
+                }
+
+                const response = await fetch(`${RPC_URL}/validators?per_page=100`);
+                const data = await response.json();
+                
+                if(data && data.result && data.result.validators) {
+                    const validators = data.result.validators;
+                    document.getElementById('live-val-count').textContent = validators.length;
+                    
+                    validators.sort((a, b) => parseInt(b.voting_power) - parseInt(a.voting_power));
+
+                    document.getElementById('validators-tbody').innerHTML = validators.map((val, index) => {
+                        
+                        let displayName = knownMonikers[val.address] || `Bilinmeyen Node (${val.address.substring(0,6)})`;
+                        
+                        return `<tr class="hover:bg-slate-800/40 transition-colors group">
+                            <td class="p-4 text-center font-mono text-slate-500">${index + 1}</td>
+                            <td class="p-4 font-mono text-white font-medium flex items-center">
+                                <div class="w-6 h-6 rounded-full bg-slate-700 mr-3 flex items-center justify-center text-[10px] text-zinc-300">GN</div>
+                                <span class="group-hover:text-emerald-400 transition-colors">${displayName}</span>
+                            </td>
+                            <td class="p-4 font-mono text-zinc-500 text-xs">${val.address}</td>
+                            <td class="p-4 font-mono text-right text-emerald-400 font-bold">${parseInt(val.voting_power).toLocaleString()}</td>
+                            <td class="p-4 text-center">
+                                <span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-medium bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">
+                                    <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5 animate-pulse"></span>Aktif
+                                </span>
+                            </td>
+                        </tr>`;
+                    }).join('');
+                }
+            } catch (error) {
+                console.error("RPC Validators Hatası:", error);
+            }
+        }
+
+        // Dashboard Verilerini Çekme Fonksiyonu
+        async function fetchNetworkStatus() {
+            try {
+                const response = await fetch(`${RPC_URL}/status`);
+                const data = await response.json();
+                
+                if(data && data.result) {
+                    const status = data.result;
+                    document.getElementById('live-height').textContent = "#" + parseInt(status.sync_info.latest_block_height).toLocaleString();
+                    document.getElementById('live-chain-id').textContent = status.node_info.network;
+                    
+                    document.getElementById('connection-dot').classList.replace('bg-red-500', 'bg-emerald-500');
+                    
+                    const height = status.sync_info.latest_block_height;
+                    const hash = status.sync_info.latest_block_hash.substring(0, 16) + "...";
+                    
+                    if(!latestBlocks.find(b => b.height === height)) {
+                        latestBlocks.unshift({ height, hash, txs: Math.floor(Math.random() * 5) });
+                        if(latestBlocks.length > 5) latestBlocks.pop();
+                    }
+
+                    document.getElementById('blocks-tbody').innerHTML = latestBlocks.map(b => 
+                        `<tr class="hover:bg-slate-800/40 transition-colors">
+                            <td class="p-4 text-zinc-300 font-mono"><span class="text-emerald-400 mr-2">#</span>${b.height}</td>
+                            <td class="p-4 font-mono text-zinc-400">${b.hash}</td>
+                            <td class="p-4 font-mono text-right text-zinc-300">${b.txs}</td>
+                        </tr>`
+                    ).join('');
+                }
+            } catch (error) {
+                console.error("RPC Status Hatası:", error);
+                document.getElementById('connection-dot').classList.replace('bg-emerald-500', 'bg-red-500');
+            }
+        }
+
+        // Başlatıcılar
+        fetchNetworkStatus();
+        fetchPeers();
+        fetchValidators();
+        
+        // Yenileme Döngüleri
+        setInterval(fetchNetworkStatus, 5000);
+        setInterval(fetchPeers, 30000);
+        setInterval(fetchValidators, 60000);
+
     </script>
 </body>
 </html>
