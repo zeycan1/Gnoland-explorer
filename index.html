@@ -151,7 +151,7 @@
                         <p class="text-xs text-slate-400 mt-1" id="peer-count-text">Ağ üzerindeki eşlere bağlanılıyor...</p>
                     </div>
                     <button onclick="copyPeers()" class="text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg transition-colors flex items-center shadow-sm">
-                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                         <span data-i18n="btn_copy">Kopyala</span>
                     </button>
                 </div>
@@ -214,14 +214,13 @@
             alert("Live Peers listesi panoya kopyalandı!");
         }
 
-        // ================= KENDİ SUNUCUNUN GÜVENLİ KÖPRÜSÜ =================
+        // ================= GÜVENLİ RPC KÖPRÜSÜ =================
         const RPC_URL = "https://gnolandexplorer.zeycanode.com/rpc"; 
         
         let latestBlocks = [];
         let peerMonikerMap = {}; 
         let knownMonikers = {};
 
-        // Genesis dosyasından Moniker'leri Çekme Fonksiyonu
         async function fetchMonikers() {
              try {
                  const response = await fetch('https://api.github.com/repos/gnolang/gno/contents/misc/testnet/genesis.json');
@@ -236,13 +235,13 @@
                           });
                       }
                  }
+                 // Lütfen tırnak içindeki g1alat... kısmını kendi tam adresinle değiştir
                  knownMonikers["g1alat..."] = "ZeycaNode";
             } catch (e) {
                  console.log("Genesis json çekilemedi.", e);
             }
         }
 
-        // Aktif Peer'leri Çekme Fonksiyonu
         async function fetchPeers() {
             try {
                 const response = await fetch(`${RPC_URL}/net_info`);
@@ -271,7 +270,6 @@
             }
         }
 
-        // Validatörleri Çekme Fonksiyonu
         async function fetchValidators() {
             try {
                 if(Object.keys(knownMonikers).length === 0){
@@ -312,7 +310,6 @@
             }
         }
 
-        // Dashboard Verilerini Çekme Fonksiyonu
         async function fetchNetworkStatus() {
             try {
                 const response = await fetch(`${RPC_URL}/status`);
