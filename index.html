@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZeycaNode — Gno.land Testnet Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12151b; --ink-2:#171b22; --surface:#1b1f28; --surface-2:#232833;
+    --line:rgba(236,234,228,0.09); --line-strong:rgba(236,234,228,0.16);
+    --paper:#ece9e2; --paper-dim:#c7c4bc; --muted:#868c99;
+    --brass:#c9a227; --brass-soft:rgba(201,162,39,0.14);
+    --navy:#2c3e55; --navy-soft:rgba(78,109,145,0.18);
+    --rust:#b8543f; --rust-soft:rgba(184,84,63,0.14);
+    --moss:#7c9473; --moss-soft:rgba(124,148,115,0.14);
+    --radius:2px;
+    --font-display:'Fraunces', serif; --font-ui:'Inter', sans-serif; --font-mono:'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 480px at 12% -10%, rgba(78,109,145,0.16), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 0%, rgba(201,162,39,0.07), transparent 55%),
+      var(--ink);
+    color:var(--paper); font-family:var(--font-ui); -webkit-font-smoothing:antialiased; min-height:100vh;
+  }
+  a{color:inherit;}
+  ::selection{background:var(--brass-soft);color:var(--paper);}
+  .facet{
+    position:relative;
+    clip-path:polygon(0 10px,10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%);
+    background:var(--surface); border:1px solid var(--line);
+  }
+  .facet::before{
+    content:""; position:absolute; top:0; left:0; width:12px; height:12px;
+    background:linear-gradient(135deg, var(--ink) 49%, transparent 50%);
+  }
+  .shell{max-width:1240px;margin:0 auto;padding:0 28px 80px;}
+  header.topbar{ position:sticky; top:0; z-index:40; background:rgba(18,21,27,0.86); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+  .topbar-inner{ max-width:1240px;margin:0 auto;padding:16px 28px; display:flex;align-items:center;gap:16px; }
+  .brand{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+  .brand svg{width:34px;height:34px;display:block;}
+  .brand-text{display:flex;flex-direction:column;line-height:1.05;}
+  .brand-text .name{font-family:var(--font-display);font-weight:600;font-size:19px;letter-spacing:0.02em;}
+  .brand-text .tag{font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase;margin-top:3px;}
+  .net-select{
+    font-family:var(--font-mono);font-size:12px;color:var(--paper);
+    background:var(--surface-2); border:1px solid var(--line-strong);
+    padding:8px 12px; border-radius:var(--radius); cursor:default;
+    display:flex; align-items:center; gap:8px; flex-shrink:0;
+  }
+  .net-dot{width:7px;height:7px;border-radius:50%;background:var(--brass);box-shadow:0 0 0 3px var(--brass-soft);}
+  .lang-switch{display:flex; border:1px solid var(--line-strong); border-radius:var(--radius); overflow:hidden; flex-shrink:0;}
+  .lang-btn{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.04em; padding:8px 11px;
+    background:var(--surface-2); color:var(--muted); border:none; cursor:pointer;
+  }
+  .lang-btn.active{background:var(--brass-soft); color:var(--brass);}
+  .search-wrap{flex:1; position:relative; min-width:160px;}
+  .search-wrap input{
+    width:100%; background:var(--surface-2); border:1px solid var(--line-strong);
+    color:var(--paper); font-family:var(--font-mono); font-size:13px;
+    padding:10px 14px 10px 38px; border-radius:var(--radius); outline:none; transition:border-color .15s;
+  }
+  .search-wrap input:focus{border-color:var(--brass);}
+  .search-wrap input::placeholder{color:var(--muted);}
+  .search-wrap svg{position:absolute; left:12px; top:50%; transform:translateY(-50%); width:15px;height:15px;color:var(--muted);}
+  .hero{padding:44px 0 30px;}
+  .hero-top{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap; margin-bottom:26px;}
+  .hero-eyebrow{font-family:var(--font-mono); font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:var(--brass); margin:0 0 10px;}
+  .hero h1{font-family:var(--font-display); font-weight:600; font-size:38px; margin:0; letter-spacing:-0.01em; max-width:640px;}
+  .hero p.sub{color:var(--muted); font-size:14.5px; max-width:560px; margin:12px 0 0; line-height:1.6;}
+  .live-pill{
+    font-family:var(--font-mono); font-size:11.5px; color:var(--moss);
+    display:flex; align-items:center; gap:7px; padding:7px 12px;
+    border:1px solid rgba(124,148,115,0.35); border-radius:100px; white-space:nowrap;
+  }
+  .live-pill.err{color:var(--rust); border-color:rgba(184,84,63,0.35);}
+  .live-pill .p{width:6px;height:6px;border-radius:50%;background:var(--moss); animation:pulse 1.6s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
+  .stat-row{display:grid; grid-template-columns:repeat(5,1fr); gap:14px;}
+  .stat-card{padding:18px 18px 16px;}
+  .stat-card .label{font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-bottom:10px;}
+  .stat-card .value{font-family:var(--font-display); font-size:25px; font-weight:600; display:flex; align-items:baseline; gap:6px;}
+  .stat-card .value .unit{font-family:var(--font-mono); font-size:12px; color:var(--muted); font-weight:400;}
+  .stat-card.fold-hit{animation:fold .5s ease;}
+  @keyframes fold{0%{transform:perspective(400px) rotateX(0deg);}35%{transform:perspective(400px) rotateX(-14deg);}100%{transform:perspective(400px) rotateX(0deg);}}
+  .tabs{display:flex; gap:2px; margin:34px 0 20px; border-bottom:1px solid var(--line); overflow-x:auto;}
+  .tab-btn{
+    font-family:var(--font-mono); font-size:12.5px; letter-spacing:0.03em;
+    background:none; border:none; color:var(--muted); padding:12px 18px; cursor:pointer; position:relative; white-space:nowrap;
+  }
+  .tab-btn.active{color:var(--paper);}
+  .tab-btn.active::after{content:"";position:absolute; left:14px; right:14px; bottom:-1px; height:2px; background:var(--brass);}
+  .tab-btn:hover{color:var(--paper);}
+  .panel{display:none; animation:fadein .25s ease;}
+  .panel.active{display:block;}
+  @keyframes fadein{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+  .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  .card{padding:0; overflow:hidden;}
+  .card-head{ display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--line); }
+  .card-head h3{font-family:var(--font-display); font-size:16px; margin:0; font-weight:600;}
+  .card-head a.viewall{font-family:var(--font-mono); font-size:11px; color:var(--brass); text-decoration:none;}
+  table{width:100%; border-collapse:collapse;}
+  th{ text-align:left; font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); font-weight:500; padding:10px 18px; border-bottom:1px solid var(--line); }
+  td{padding:12px 18px; font-size:13px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tbody tr{transition:background .12s;}
+  tbody tr:hover{background:var(--surface-2);}
+  tbody tr:last-child td{border-bottom:none;}
+  .mono{font-family:var(--font-mono);}
+  .hash-link{color:var(--brass); font-family:var(--font-mono); font-size:12.5px; text-decoration:none;}
+  .dim{color:var(--muted);}
+  .empty-row td{color:var(--muted); font-family:var(--font-mono); font-size:12.5px; padding:22px 18px; text-align:center;}
+  .badge-ok{color:var(--moss);}
+  .badge-fail{color:var(--rust);}
+  .vp-bar{width:90px; height:5px; background:var(--surface-2); border-radius:100px; overflow:hidden; display:inline-block; vertical-align:middle; margin-right:8px;}
+  .vp-bar span{display:block; height:100%; background:var(--brass);}
+  .section-sub{color:var(--muted); font-size:13px; margin:0 0 16px;}
+  .overlay{ position:fixed; inset:0; background:rgba(10,12,16,0.6); z-index:80; display:none; align-items:stretch; justify-content:flex-end; }
+  .overlay.open{display:flex;}
+  .drawer{ width:420px; max-width:90vw; background:var(--ink-2); border-left:1px solid var(--line-strong); padding:26px; overflow-y:auto; animation:slidein .22s ease; }
+  @keyframes slidein{from{transform:translateX(24px); opacity:0;} to{transform:translateX(0); opacity:1;}}
+  .drawer-close{ background:none; border:1px solid var(--line-strong); color:var(--muted); width:28px; height:28px; border-radius:var(--radius); cursor:pointer; float:right; font-family:var(--font-mono); }
+  .drawer h4{font-family:var(--font-display); font-size:19px; margin:6px 0 20px; clear:both;}
+  .drawer-row{display:flex; justify-content:space-between; gap:12px; padding:11px 0; border-bottom:1px solid var(--line);}
+  .drawer-row .k{font-family:var(--font-mono); font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; flex-shrink:0;}
+  .drawer-row .v{font-family:var(--font-mono); font-size:12.5px; text-align:right; word-break:break-all;}
+  footer{border-top:1px solid var(--line); margin-top:60px;}
+  .footer-inner{max-width:1240px;margin:0 auto;padding:26px 28px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;}
+  .footer-inner .fmark{font-family:var(--font-mono); font-size:11.5px; color:var(--muted);}
+  .footer-links{display:flex; gap:20px;}
+  .footer-links a{font-family:var(--font-mono); font-size:11.5px; color:var(--muted); text-decoration:none;}
+  .footer-links a:hover{color:var(--brass);}
+  @media (max-width:880px){
+    .stat-row{grid-template-columns:repeat(2,1fr);}
+    .grid-2{grid-template-columns:1fr;}
+    .topbar-inner{flex-wrap:wrap;}
+    .search-wrap{order:3; width:100%;}
+    .hero h1{font-size:29px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <svg viewBox="0 0 190 188" xmlns="http://www.w3.org/2000/svg">
+        <g><path fill="#12151b" d="M 8.5,-0.5 C 68.8333,-0.5 129.167,-0.5 189.5,-0.5C 189.5,62.1667 189.5,124.833 189.5,187.5C 129.167,187.5 68.8333,187.5 8.5,187.5C 5.3449,184.838 3.17823,181.505 2,177.5C 1.33333,121.167 1.33333,64.8333 2,8.5C 3.6107,5.06241 5.77737,2.06241 8.5,-0.5 Z"/></g>
+        <g><path fill="#c9a227" d="M 36.5,33.5 C 77.5,33.5 118.5,33.5 159.5,33.5C 159.5,47.5 159.5,61.5 159.5,75.5C 157.167,77.1667 155.167,79.1667 153.5,81.5C 149.5,84.8333 145.833,88.5 142.5,92.5C 135.167,99.1667 128.167,106.167 121.5,113.5C 111.985,113.827 102.652,113.494 93.5,112.5C 96.2624,110.738 97.2624,109.404 97.5,107.5C 101.833,102.5 106.5,97.8333 111.5,93.5C 118.573,87.4309 120.906,84.7642 122.5,81.5C 126.5,76.8333 130.833,72.5 135.5,68.5C 139.483,61.7016 139.817,57.7016 139.5,53.5C 111.5,53.5 83.5,53.5 55.5,53.5C 55.5,60.8333 55.5,68.1667 55.5,75.5C 49.1667,81.1667 43.1667,87.1667 37.5,93.5C 36.5029,73.6736 36.1695,53.6736 36.5,33.5 Z"/></g>
+        <g><path fill="#ece9e2" d="M 36.5,111.5 C 38.8333,108.5 41.5,105.833 44.5,103.5C 49.562,99.4407 53.8953,94.774 57.5,89.5C 61.5,84.8333 65.8333,80.5 70.5,76.5C 80.6775,74.3439 88.6775,74.1772 96.5,75.5C 94.5,77.8333 92.5,80.1667 90.5,82.5C 85.5,86.5 84.5,87.5 84.5,89.5C 81.1195,91.8797 78.4528,94.8797 76.5,98.5C 72.517,101.089 69.2411,106.938 64,113.5C 63.3292,114.252 61.5,114.5 61.5,114.5C 60.1667,115.167 59.1667,116.167 58.5,117.5C 57.3826,117.944 57,118.5 57,118.5C 56.5005,124.491 56.3338,130.491 56.5,136.5C 83.6636,137.664 110.997,137.83 138.5,137C 139.222,126.447 139.556,117.447 140.5,108.5C 146.559,102.438 151.226,98.1047 156.5,94.5C 159.497,113.327 159.831,134.327 159.5,155.5C 118.5,155.5 77.5,155.5 36.5,155.5C 36.5,140.833 36.5,126.167 36.5,111.5 Z"/></g>
+      </svg>
+      <div class="brand-text">
+        <span class="name">ZeycaNode</span>
+        <span class="tag" data-i18n="brandTag">Gno.land Testnet Explorer</span>
+      </div>
+    </div>
+
+    <div class="net-select" id="netSelect">
+      <span class="net-dot" id="netDot"></span> <span id="netLabel">—</span>
+    </div>
+
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="searchInput" type="text" data-i18n-placeholder="searchPlaceholder" placeholder="Block height, tx hash or address…">
+    </div>
+
+    <div class="lang-switch">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="tr">TR</button>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+
+  <section class="hero">
+    <div class="hero-top">
+      <div>
+        <p class="hero-eyebrow" data-i18n="heroEyebrow">Chain status</p>
+        <h1>Gno.land</h1>
+        <p class="sub" data-i18n="heroSub">Blocks, transactions, realms and validators — all in one place, real-time.</p>
+      </div>
+      <div class="live-pill" id="livePill"><span class="p"></span> <span id="livePillText" data-i18n="connecting">Connecting to RPC…</span></div>
+    </div>
+
+    <div class="stat-row" id="statRow">
+      <div class="facet stat-card">
+        <div class="label" data-i18n="statHeight">Block height</div>
+        <div class="value" id="statHeight">—</div>
+      </div>
+      <div class="facet stat-card">
+        <div class="label" data-i18n="statBlockTime">Avg. block time</div>
+        <div class="value" id="statBlockTime">— <span class="unit" data-i18n="unitSec">sec</span></div>
+      </div>
+      <div class="facet stat-card">
+        <div class="label" data-i18n="statValidators">Active validators</div>
+        <div class="value" id="statValidators">—</div>
+      </div>
+      <div class="facet stat-card">
+        <div class="label" data-i18n="statTotalTxs">Total transactions</div>
+        <div class="value" id="statTotalTxs">—</div>
+      </div>
+      <div class="facet stat-card">
+        <div class="label" data-i18n="statChainId">Chain ID</div>
+        <div class="value mono" id="statChainId" style="font-size:15px">—</div>
+      </div>
+    </div>
+    <p class="section-sub" id="dataSourceNote" style="margin-top:14px"></p>
+  </section>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab-btn active" data-tab="overview" data-i18n="tabOverview">Overview</button>
+    <button class="tab-btn" data-tab="blocks" data-i18n="tabBlocks">Blocks</button>
+    <button class="tab-btn" data-tab="txs" data-i18n="tabTxs">Transactions</button>
+    <button class="tab-btn" data-tab="validators" data-i18n="tabValidators">Validators</button>
+  </nav>
+
+  <!-- OVERVIEW -->
+  <div class="panel active" id="panel-overview">
+    <div class="grid-2">
+      <div class="facet card">
+        <div class="card-head"><h3 data-i18n="overviewLatestBlocks">Latest blocks</h3><a class="viewall" data-goto="blocks" data-i18n="viewAll">view all →</a></div>
+        <table><tbody id="overviewBlocks"></tbody></table>
+      </div>
+      <div class="facet card">
+        <div class="card-head"><h3 data-i18n="overviewLatestTxs">Latest transactions</h3><a class="viewall" data-goto="txs" data-i18n="viewAll">view all →</a></div>
+        <table><tbody id="overviewTxs"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOCKS -->
+  <div class="panel" id="panel-blocks">
+    <div class="facet card">
+      <div class="card-head"><h3 data-i18n="tabBlocks">Blocks</h3><span class="dim mono" style="font-size:11px" data-i18n="live">live</span></div>
+      <table>
+        <thead><tr>
+          <th data-i18n="colHeight">Height</th><th data-i18n="colHash">Hash</th>
+          <th data-i18n="colProposer">Proposer</th><th data-i18n="colTxs">Txs</th><th data-i18n="colTime">Time</th>
+        </tr></thead>
+        <tbody id="blocksTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TXS -->
+  <div class="panel" id="panel-txs">
+    <p class="section-sub" id="txPanelNote"></p>
+    <div class="facet card">
+      <table>
+        <thead><tr>
+          <th data-i18n="colHash">Hash</th><th data-i18n="colHeight">Block</th>
+          <th data-i18n="colSize">Size</th><th data-i18n="colTime">Time</th><th data-i18n="colStatus">Status</th>
+        </tr></thead>
+        <tbody id="txsTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- VALIDATORS -->
+  <div class="panel" id="panel-validators">
+    <p class="section-sub" id="validatorsSourceNote"></p>
+    <div class="facet card">
+      <table>
+        <thead><tr>
+          <th>#</th><th data-i18n="colMoniker">Moniker</th><th data-i18n="colAddress">Address</th>
+          <th data-i18n="colVotingPower">Voting Power</th><th data-i18n="colUptime">Uptime</th><th data-i18n="colStatus">Status</th>
+        </tr></thead>
+        <tbody id="validatorsTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="drawer" id="drawer"></div>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <span class="fmark" data-i18n="footerTagline">ZeycaNode — Gno.land testnet infrastructure and node operations.</span>
+    <div class="footer-links">
+      <a href="https://docs.gno.land" target="_blank" rel="noopener">docs.gno.land</a>
+      <a href="https://www.zeycanode.com" target="_blank" rel="noopener">zeycanode.com</a>
+      <a href="https://rpc.test13.testnets.gno.land/status" target="_blank" rel="noopener" data-i18n="footerRpcStatus">RPC status</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ========================================================================
+   i18n
+   ======================================================================== */
+const I18N = {
+  en:{
+    brandTag:"Gno.land Testnet Explorer",
+    searchPlaceholder:"Block height, tx hash or address…",
+    heroEyebrow:"Chain status",
+    heroSub:"Blocks, transactions, realms and validators — all in one place, real-time.",
+    connecting:"Connecting to RPC…",
+    liveSuffix:"— live",
+    unreachable:"Could not reach RPC",
+    statHeight:"Block height", statBlockTime:"Avg. block time", statValidators:"Active validators",
+    statTotalTxs:"Total transactions", statChainId:"Chain ID", unitSec:"sec",
+    sourcePrefix:"Source:", sourceLive:"— live connection", sourceConnecting:"connecting…",
+    sourceUnreachable:"could not connect from the browser (CORS or network restriction).",
+    tabOverview:"Overview", tabBlocks:"Blocks", tabTxs:"Transactions", tabValidators:"Validators",
+    overviewLatestBlocks:"Latest blocks", overviewLatestTxs:"Latest transactions", viewAll:"view all →",
+    live:"live",
+    colHeight:"Height", colHash:"Hash", colProposer:"Proposer", colTxs:"Txs", colTime:"Time",
+    colSize:"Size", colStatus:"Status", colMoniker:"Moniker", colAddress:"Address", colVotingPower:"Voting Power", colUptime:"Uptime",
+    statusCommitted:"committed", statusActive:"active", statusJailed:"jailed",
+    emptyBlocks:"No blocks loaded yet.", emptyTxs:"No transactions found in the latest blocks.", emptyValidators:"No validators loaded yet.",
+    timeJustNow:"just now", timeMinAgo:m=>m+" min ago", timeHourAgo:h=>h+" hr ago", timeDayAgo:d=>d+" d ago",
+    drawerBlockTitle:h=>"Block #"+h, drawerHash:"Hash", drawerProposer:"Proposer", drawerTxCount:"Tx count",
+    drawerTime:"Time", drawerTxsInBlock:"Transactions in this block", drawerNone:"none",
+    drawerTxTitle:"Transaction", drawerBlock:"Block", drawerSize:"Size", drawerStatus:"Status", drawerRawNote:"Raw transaction bytes are recorded on-chain; message decoding (sender, msg type) is not wired up yet.",
+    monikerLoading:"Fetching monikers…",
+    monikerFound:(f,t)=>"Moniker: "+f+"/"+t+" matched via r/gnops/valopers.",
+    monikerNone:"Moniker: none of these validators are registered on r/gnops/valopers.",
+    monikerErr:m=>"Moniker lookup failed: "+m,
+    uptimeLoading:"calculating uptime…",
+    uptimeOk:w=>"Uptime computed from the last "+w+" blocks' commit signatures.",
+    uptimeErr:m=>"Uptime unavailable ("+m+").",
+    footerTagline:"ZeycaNode — Gno.land testnet infrastructure and node operations.",
+    footerRpcStatus:"RPC status",
+    localeTag:"en-US"
+  },
+  tr:{
+    brandTag:"Gno.land Testnet Explorer",
+    searchPlaceholder:"Blok yüksekliği, tx hash veya adres…",
+    heroEyebrow:"Chain durumu",
+    heroSub:"Bloklar, işlemler, realm'ler ve validator'lar  tek katmanda, gerçek zamanlı.",
+    connecting:"RPC'ye bağlanıyor…",
+    liveSuffix:"— canlı",
+    unreachable:"RPC'ye ulaşılamadı",
+    statHeight:"Blok yüksekliği", statBlockTime:"Ort. blok süresi", statValidators:"Aktif validator",
+    statTotalTxs:"Toplam işlem", statChainId:"Chain ID", unitSec:"sn",
+    sourcePrefix:"Kaynak:", sourceLive:"— canlı bağlantı", sourceConnecting:"bağlanıyor…",
+    sourceUnreachable:"tarayıcıdan ulaşılamadı (CORS veya ağ kısıtı olabilir).",
+    tabOverview:"Genel Bakış", tabBlocks:"Bloklar", tabTxs:"İşlemler", tabValidators:"Validator'lar",
+    overviewLatestBlocks:"Son bloklar", overviewLatestTxs:"Son işlemler", viewAll:"tümü →",
+    live:"canlı",
+    colHeight:"Yükseklik", colHash:"Hash", colProposer:"Proposer", colTxs:"İşlem", colTime:"Zaman",
+    colSize:"Boyut", colStatus:"Durum", colMoniker:"Moniker", colAddress:"Adres", colVotingPower:"Voting Power", colUptime:"Uptime",
+    statusCommitted:"onaylandı", statusActive:"aktif", statusJailed:"jailed",
+    emptyBlocks:"Henüz blok yüklenmedi.", emptyTxs:"Son bloklarda işlem bulunamadı.", emptyValidators:"Henüz validator yüklenmedi.",
+    timeJustNow:"az önce", timeMinAgo:m=>m+" dk önce", timeHourAgo:h=>h+" sa önce", timeDayAgo:d=>d+" gün önce",
+    drawerBlockTitle:h=>"Blok #"+h, drawerHash:"Hash", drawerProposer:"Proposer", drawerTxCount:"İşlem sayısı",
+    drawerTime:"Zaman", drawerTxsInBlock:"Bu bloktaki işlemler", drawerNone:"yok",
+    drawerTxTitle:"İşlem", drawerBlock:"Blok", drawerSize:"Boyut", drawerStatus:"Durum", drawerRawNote:"Ham işlem byte'ları zincirde kayıtlı; mesaj decode katmanı (gönderen, mesaj tipi) henüz bağlanmadı.",
+    monikerLoading:"Moniker'lar çekiliyor…",
+    monikerFound:(f,t)=>"Moniker: r/gnops/valopers üzerinden "+f+"/"+t+" eşleşti.",
+    monikerNone:"Moniker: bu ağdaki validator'ların hiçbiri r/gnops/valopers'a kayıtlı değil.",
+    monikerErr:m=>"Moniker sorgusu başarısız: "+m,
+    uptimeLoading:"uptime hesaplanıyor…",
+    uptimeOk:w=>"Uptime son "+w+" bloğun commit imzalarından hesaplandı.",
+    uptimeErr:m=>"Uptime hesaplanamadı ("+m+").",
+    footerTagline:"ZeycaNode — Gno.land testnet altyapısı ve node operatörlüğü.",
+    footerRpcStatus:"RPC durumu",
+    localeTag:"tr-TR"
+  }
+};
+let currentLang = 'en';
+function t(key, ...args){
+  const d = I18N[currentLang];
+  const v = d[key];
+  return (typeof v === 'function') ? v(...args) : v;
+}
+function applyStaticI18n(){
+  document.documentElement.lang = currentLang;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{ el.placeholder = t(el.getAttribute('data-i18n-placeholder')); });
+}
+document.querySelectorAll('.lang-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    currentLang = btn.dataset.lang;
+    document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active', b===btn));
+    applyStaticI18n();
+    reRenderEverythingForLang();
+  });
+});
+
+/* ========================================================================
+   helpers
+   ======================================================================== */
+function short(str,a=6,b=6){ return (str && str.length>a+b+3) ? str.slice(0,a)+"…"+str.slice(-b) : (str||''); }
+function fmtNum(n){ return n.toLocaleString(t('localeTag')); }
+function ago(min){
+  if(min<1) return t('timeJustNow');
+  if(min<60) return t('timeMinAgo', Math.floor(min));
+  const h=Math.floor(min/60);
+  if(h<24) return t('timeHourAgo', h);
+  return t('timeDayAgo', Math.floor(h/24));
+}
+function b64encode(str){ return btoa(unescape(encodeURIComponent(str))); }
+function b64decode(str){ try{ return decodeURIComponent(escape(atob(str))); }catch(e){ try{return atob(str);}catch(e2){return '';} } }
+async function sha256HexFromB64(b64){
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+
+/* ========================================================================
+   state (tamamen gerçek veriyle doldurulur, hiçbir mock/demo yok)
+   ======================================================================== */
+let blocks = [];          // { height, hash, proposer, txCount, min }
+let txs = [];              // { hash, height, size, min }
+let validators = [];       // { rank, moniker, address, vp, uptime, status }
+const txBlockCache = new Map(); // height -> tx[] (aynı bloğu tekrar çekmemek için)
+
+/* ========================================================================
+   render
+   ======================================================================== */
+function renderBlockRow(b){
+  return `<tr onclick="openBlock(${b.height})">
+    <td class="mono" style="color:var(--brass)">#${fmtNum(b.height)}</td>
+    <td><a class="hash-link">${short(b.hash,8,6)}</a></td>
+    <td class="mono">${b.proposer}</td>
+    <td class="mono">${b.txCount}</td>
+    <td class="dim mono" style="font-size:11.5px">${ago(b.min)}</td>
+  </tr>`;
+}
+function renderTxRow(tx){
+  return `<tr onclick="openTx('${tx.hash}')">
+    <td><a class="hash-link">${short(tx.hash,10,6)}</a></td>
+    <td class="mono" style="color:var(--brass)">#${fmtNum(tx.height)}</td>
+    <td class="mono dim">${tx.size} B</td>
+    <td class="dim mono" style="font-size:11.5px">${ago(tx.min)}</td>
+    <td class="badge-ok mono" style="font-size:11.5px">${t('statusCommitted')}</td>
+  </tr>`;
+}
+function renderValidatorRow(v){
+  const vpMax = Math.max(...validators.map(x=>x.vp), 1);
+  const pct=Math.round(v.vp/vpMax*100);
+  return `<tr>
+    <td class="mono dim">${v.rank}</td>
+    <td class="mono">${v.moniker}</td>
+    <td><a class="hash-link">${short(v.address,8,5)}</a></td>
+    <td><span class="vp-bar"><span style="width:${pct}%"></span></span><span class="mono" style="font-size:12px">${v.vp}%</span></td>
+    <td class="mono" style="font-size:12px">${v.uptime}${v.uptime==='—'?'':'%'}</td>
+    <td class="${v.status==='active'?'badge-ok':'badge-fail'} mono" style="font-size:11.5px">${v.status==='active'?t('statusActive'):t('statusJailed')}</td>
+  </tr>`;
+}
+function emptyRow(colspan, msgKey){
+  return `<tr class="empty-row"><td colspan="${colspan}">${t(msgKey)}</td></tr>`;
+}
+
+function renderBlocksUI(){
+  document.getElementById('overviewBlocks').innerHTML = blocks.length ? blocks.slice(0,5).map(renderBlockRow).join('') : emptyRow(5,'emptyBlocks');
+  document.getElementById('blocksTable').innerHTML = blocks.length ? blocks.map(renderBlockRow).join('') : emptyRow(5,'emptyBlocks');
+}
+function renderTxsUI(){
+  const sorted = [...txs].sort((a,b)=>b.height-a.height || a.min-b.min).slice(0,60);
+  document.getElementById('overviewTxs').innerHTML = sorted.length ? sorted.slice(0,5).map(renderTxRow).join('') : emptyRow(5,'emptyTxs');
+  document.getElementById('txsTable').innerHTML = sorted.length ? sorted.map(renderTxRow).join('') : emptyRow(5,'emptyTxs');
+}
+function renderValidatorsUI(){
+  document.getElementById('validatorsTable').innerHTML = validators.length ? validators.map(renderValidatorRow).join('') : emptyRow(6,'emptyValidators');
+}
+function reRenderEverythingForLang(){
+  renderBlocksUI(); renderTxsUI(); renderValidatorsUI();
+  renderValidatorsSourceNote(); renderTxPanelNote(); renderDataSourceNote();
+}
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab-btn').forEach(btn=>{ btn.addEventListener('click',()=>switchTab(btn.dataset.tab)); });
+document.querySelectorAll('[data-goto]').forEach(a=>{ a.addEventListener('click',(e)=>{e.preventDefault(); switchTab(a.dataset.goto);}); });
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active', p.id==='panel-'+tab));
+}
+
+/* ---------- drawer ---------- */
+const overlay=document.getElementById('overlay');
+const drawer=document.getElementById('drawer');
+function openDrawer(html){ drawer.innerHTML=html; overlay.classList.add('open'); }
+overlay.addEventListener('click',(e)=>{ if(e.target===overlay) overlay.classList.remove('open'); });
+
+function openBlock(height){
+  const b=blocks.find(x=>x.height===height);
+  if(!b) return;
+  const blockTxs = txs.filter(x=>x.height===height);
+  openDrawer(`
+    <button class="drawer-close" onclick="overlay.classList.remove('open')">✕</button>
+    <h4>${t('drawerBlockTitle', fmtNum(b.height))}</h4>
+    <div class="drawer-row"><span class="k">${t('drawerHash')}</span><span class="v">${b.hash}</span></div>
+    <div class="drawer-row"><span class="k">${t('drawerProposer')}</span><span class="v">${b.proposer}</span></div>
+    <div class="drawer-row"><span class="k">${t('drawerTxCount')}</span><span class="v">${b.txCount}</span></div>
+    <div class="drawer-row"><span class="k">${t('drawerTime')}</span><span class="v">${ago(b.min)}</span></div>
+    <div class="drawer-row"><span class="k">${t('drawerTxsInBlock')}</span><span class="v">${blockTxs.length || t('drawerNone')}</span></div>
+    ${blockTxs.map(tx=>`<div class="drawer-row"><span class="v" style="color:var(--brass)">${short(tx.hash,10,6)}</span><span class="v">${tx.size} B</span></div>`).join('')}
+  `);
+}
+function openTx(hash){
+  const tx=txs.find(x=>x.hash===hash);
+  if(!tx) return;
+  openDrawer(`
+    <button class="drawer-close" onclick="overlay.classList.remove('open')">✕</button>
+    <h4>${t('drawerTxTitle')}</h4>
+    <div class="drawer-row"><span class="k">${t('drawerHash')}</span><span class="v">${tx.hash}</span></div>
+    <div class="drawer-row"><span class="k">${t('drawerBlock')}</span><span class="v">#${fmtNum(tx.height)}</span></div>
+    <div class="drawer-row"><span class="k">${t('drawerSize')}</span><span class="v">${tx.size} bytes</span></div>
+    <div class="drawer-row"><span class="k">${t('drawerTime')}</span><span class="v">${ago(tx.min)}</span></div>
+    <div class="drawer-row"><span class="k">${t('drawerStatus')}</span><span class="v" style="color:var(--moss)">${t('statusCommitted')}</span></div>
+    <p class="section-sub" style="margin-top:16px">${t('drawerRawNote')}</p>
+  `);
+}
+
+/* ---------- search ---------- */
+document.getElementById('searchInput').addEventListener('keydown',(e)=>{
+  if(e.key!=='Enter') return;
+  const q=e.target.value.trim();
+  if(!q) return;
+  if(/^#?\d+$/.test(q)) switchTab('blocks');
+  else if(/^g1/.test(q)) switchTab('validators');
+  else switchTab('txs');
+});
+
+/* ========================================================================
+   RPC entegrasyonu (Tendermint2 / CometBFT JSON-RPC) — tamamen canlı
+   ======================================================================== */
+const RPC_ENDPOINTS = [
+  { url:"https://rpc.test13.testnets.gno.land", label:"test13.testnets.gno.land" },
+  { url:"https://gnolandexplorer.zeycanode.com/rpc", label:"ZeycaNode" }
+];
+let activeRpcIndex = 0;
+let liveMode = false;
+let lastLiveHeight = null;
+
+async function rpcGet(path){
+  const base = RPC_ENDPOINTS[activeRpcIndex].url;
+  const res = await fetch(base + path, { method:"GET" });
+  if(!res.ok) throw new Error("RPC "+res.status);
+  const json = await res.json();
+  if(json.error) throw new Error(json.error.data || "RPC error");
+  return json.result;
+}
+async function fetchWithRetry(path, tries=2){
+  let lastErr;
+  for(let i=0;i<tries;i++){ try{ return await rpcGet(path); } catch(e){ lastErr=e; } }
+  throw lastErr;
+}
+async function abciQueryEval(pkgpath, expr){
+  const base = RPC_ENDPOINTS[activeRpcIndex].url;
+  const dataStr = pkgpath + "." + expr;
+  const body = { jsonrpc:"2.0", id:"1", method:"abci_query", params:{ path:"vm/qeval", data:b64encode(dataStr), prove:false } };
+  const res = await fetch(base, { method:"POST", headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+  if(!res.ok) throw new Error("HTTP "+res.status);
+  const json = await res.json();
+  if(json.error) throw new Error(json.error.data || json.error.message);
+  const rb = json.result?.response?.ResponseBase;
+  if(!rb) throw new Error("unexpected response schema");
+  if(rb.Error) throw new Error(rb.Error.value || rb.Error.message || 'VM error');
+  return rb.Data ? b64decode(rb.Data) : "";
+}
+
+/* ---------- connection state ---------- */
+let dataSourceState = { status:'connecting' }; // connecting | live | unreachable
+function renderDataSourceNote(){
+  const dot=document.getElementById('netDot');
+  const label=document.getElementById('netLabel');
+  const pillText=document.getElementById('livePillText');
+  const pill=document.getElementById('livePill');
+  const note=document.getElementById('dataSourceNote');
+  if(dataSourceState.status==='live'){
+    dot.style.background='var(--moss)'; dot.style.boxShadow='0 0 0 3px var(--moss-soft)';
+    label.textContent=(dataSourceState.chainId||'') + ' · testnet';
+    pill.classList.remove('err');
+    pillText.textContent=RPC_ENDPOINTS[activeRpcIndex].label+' '+t('liveSuffix');
+    note.innerHTML = t('sourcePrefix')+' <span class="mono">'+RPC_ENDPOINTS[activeRpcIndex].label+'</span> '+t('sourceLive');
+  } else if(dataSourceState.status==='unreachable'){
+    dot.style.background='var(--rust)'; dot.style.boxShadow='0 0 0 3px var(--rust-soft)';
+    label.textContent='testnet';
+    pill.classList.add('err');
+    pillText.textContent=t('unreachable');
+    note.innerHTML = t('sourcePrefix')+' '+t('sourceUnreachable');
+  } else {
+    dot.style.background='var(--brass)'; dot.style.boxShadow='0 0 0 3px var(--brass-soft)';
+    label.textContent='testnet';
+    pill.classList.remove('err');
+    pillText.textContent=t('connecting');
+    note.textContent = t('sourcePrefix')+' '+t('sourceConnecting');
+  }
+}
+
+async function fetchLiveStatus(){
+  const result = await rpcGet('/status');
+  const chainId = result.node_info.network;
+  const height = parseInt(result.sync_info.latest_block_height, 10);
+  document.getElementById('statChainId').textContent = chainId;
+  document.getElementById('statHeight').textContent = fmtNum(height);
+  dataSourceState = { status:'live', chainId };
+  renderDataSourceNote();
+  // toplam işlem sayısı (gerçek, header.total_txs alanından)
+  try{
+    const commitResult = await rpcGet(`/commit?height=${height}`);
+    const totalTxs = commitResult?.signed_header?.header?.total_txs;
+    if(totalTxs!==undefined) document.getElementById('statTotalTxs').textContent = fmtNum(parseInt(totalTxs,10));
+  } catch(e){ /* opsiyonel istatistik, sessizce atla */ }
+  return height;
+}
+
+async function fetchLiveBlocks(topHeight){
+  const minH = Math.max(1, topHeight-13);
+  const result = await rpcGet(`/blockchain?minHeight=${minH}&maxHeight=${topHeight}`);
+  const metas = result.block_metas || [];
+  const liveBlocks = metas.map(m=>{
+    const h = parseInt(m.header.height,10);
+    const time = new Date(m.header.time);
+    const min = Math.max(0,(Date.now()-time.getTime())/60000);
+    return { height:h, hash:m.block_id.hash, proposer: short(m.header.proposer_address||'—',6,4), txCount: parseInt(m.num_txs||0,10), min };
+  }).sort((a,b)=>b.height-a.height);
+  if(liveBlocks.length){
+    blocks = liveBlocks;
+    if(liveBlocks.length>1){
+      const diffs=[];
+      for(let i=0;i<liveBlocks.length-1;i++) diffs.push(Math.abs(liveBlocks[i].min-liveBlocks[i+1].min));
+      const avgMin = diffs.reduce((a,b)=>a+b,0)/diffs.length;
+      document.getElementById('statBlockTime').innerHTML = (avgMin*60).toFixed(1)+' <span class="unit">'+t('unitSec')+'</span>';
+    }
+  }
+  renderBlocksUI();
+  fetchRealTxs();
+}
+
+/* ---------- gerçek işlemler: /block içindeki ham tx byte'larından ---------- */
+function renderTxPanelNote(){
+  document.getElementById('txPanelNote').innerHTML =
+    t('sourcePrefix')+' <span class="mono">'+RPC_ENDPOINTS[activeRpcIndex].label+'/block</span> — '+
+    (currentLang==='en'
+      ? 'hashes are computed live (SHA-256 of the raw tx bytes). Message decoding (sender, type) is not implemented yet.'
+      : 'hash\'ler canlı hesaplanıyor (ham tx byte\'larının SHA-256\'sı). Mesaj decode katmanı (gönderen, tip) henüz yok.');
+}
+async function fetchRealTxs(){
+  const withTxs = blocks.filter(b=>b.txCount>0 && !txBlockCache.has(b.height));
+  if(withTxs.length){
+    await Promise.allSettled(withTxs.map(async b=>{
+      try{
+        const blockResult = await rpcGet(`/block?height=${b.height}`);
+        const rawTxs = blockResult?.block?.data?.txs || [];
+        const parsed = await Promise.all(rawTxs.map(async b64=>{
+          const hash = await sha256HexFromB64(b64);
+          const size = Math.floor(b64.length*3/4);
+          return { hash, height:b.height, size, min:b.min };
+        }));
+        txBlockCache.set(b.height, parsed);
+      } catch(e){ txBlockCache.set(b.height, []); }
+    }));
+  }
+  // hâlâ bilinen bloklarda olan tx'leri birleştir (eski bloklar listeden düşünce cache'den de temizle)
+  const knownHeights = new Set(blocks.map(b=>b.height));
+  [...txBlockCache.keys()].forEach(h=>{ if(!knownHeights.has(h)) txBlockCache.delete(h); });
+  txs = [...txBlockCache.values()].flat();
+  renderTxsUI();
+  renderTxPanelNote();
+}
+
+/* ---------- validators + uptime + moniker ---------- */
+let monikerState = { status:'loading' };
+let uptimeState = { status:'loading' };
+function renderValidatorsSourceNote(){
+  let monikerTxt;
+  if(monikerState.status==='found') monikerTxt = t('monikerFound', monikerState.foundCount, monikerState.total);
+  else if(monikerState.status==='error') monikerTxt = t('monikerErr', monikerState.msg);
+  else if(monikerState.status==='none') monikerTxt = t('monikerNone');
+  else monikerTxt = t('monikerLoading');
+
+  let uptimeTxt;
+  if(uptimeState.status==='ok') uptimeTxt = t('uptimeOk', uptimeState.windowSize);
+  else if(uptimeState.status==='error') uptimeTxt = t('uptimeErr', uptimeState.msg);
+  else uptimeTxt = t('uptimeLoading');
+
+  document.getElementById('validatorsSourceNote').innerHTML =
+    t('sourcePrefix')+' <span class="mono">'+RPC_ENDPOINTS[activeRpcIndex].label+'/validators</span> '+t('sourceLive')+'. '+monikerTxt+' '+uptimeTxt;
+}
+
+const uptimeByAddr = {}; // adres -> "95.0" (kalıcı önbellek, tick'ler arası silinmez)
+async function fetchLiveValidators(height){
+  const result = await rpcGet(`/validators?height=${height}`);
+  const vs = result.validators || [];
+  if(!vs.length) return;
+  const totalVP = vs.reduce((s,v)=>s+parseInt(v.voting_power,10),0);
+  validators = vs.map((v,i)=>({
+    rank:0,
+    moniker: short(v.address,6,4),
+    address: v.address,
+    vp: totalVP ? +(parseInt(v.voting_power,10)/totalVP*100).toFixed(1) : 0,
+    uptime: (uptimeByAddr[v.address] !== undefined) ? uptimeByAddr[v.address] : '—',
+    status:'active'
+  })).sort((a,b)=>b.vp-a.vp);
+  validators.forEach((v,i)=>{ v.rank = i+1; });
+  document.getElementById('statValidators').textContent = vs.length;
+  renderValidatorsUI();
+  renderValidatorsSourceNote();
+  computeUptimeIfDue(height);
+  enrichMonikers();
+}
+
+/* ---------- moniker: gno.land/r/gnops/valopers ---------- */
+const VALOPERS_PKGPATH = "gno.land/r/gnops/valopers";
+const valoperMonikerByConsensusAddr = {};
+let valopersLoadPromise = null;
+
+function parseValoperListPage(md){
+  const re = /\*\s*\[([^\]]+)\]\(\/r\/gnops\/valopers:(g1[a-z0-9]+)\)/g;
+  const out=[]; let m;
+  while((m=re.exec(md))) out.push({ moniker:m[1], operatorAddr:m[2] });
+  return out;
+}
+function parseValoperDetail(raw){
+  const nameMatch = raw.match(/struct\{\("([^"]*)"/);
+  const addrMatches = [...raw.matchAll(/\("(g1[a-z0-9]+)" \.uverse\.address\)/g)];
+  return { moniker: nameMatch?nameMatch[1]:null, consensusAddr: addrMatches.length>=2?addrMatches[1][1]:null };
+}
+async function loadValopersMap(){
+  if(valopersLoadPromise) return valopersLoadPromise;
+  valopersLoadPromise = (async ()=>{
+    const entries=[]; let page=1;
+    while(page<=8){
+      const pathArg = page===1 ? "" : ("?page="+page);
+      let out;
+      try{ out = await abciQueryEval(VALOPERS_PKGPATH, `Render("${pathArg}")`); }
+      catch(e){ monikerState = {status:'error', msg:e.message}; break; }
+      const items = parseValoperListPage(out);
+      if(!items.length) break;
+      entries.push(...items);
+      if(!out.includes('?page='+(page+1))) break;
+      page++;
+    }
+    await Promise.allSettled(entries.map(async e=>{
+      try{
+        const raw = await abciQueryEval(VALOPERS_PKGPATH, `GetByAddr("${e.operatorAddr}")`);
+        const {moniker, consensusAddr} = parseValoperDetail(raw);
+        if(consensusAddr) valoperMonikerByConsensusAddr[consensusAddr] = moniker || e.moniker;
+      } catch(err){ /* bu valoper için detay alınamadı, atla */ }
+    }));
+    return valoperMonikerByConsensusAddr;
+  })();
+  return valopersLoadPromise;
+}
+async function enrichMonikers(){
+  await loadValopersMap();
+  let foundCount=0;
+  validators.forEach(v=>{
+    if(valoperMonikerByConsensusAddr[v.address]){ v.moniker = valoperMonikerByConsensusAddr[v.address]; foundCount++; }
+  });
+  if(monikerState.status!=='error'){
+    monikerState = foundCount>0 ? {status:'found', foundCount, total:validators.length} : {status:'none'};
+  }
+  renderValidatorsSourceNote();
+  renderValidatorsUI();
+}
+
+/* ---------- uptime: son N bloğun commit imzalarından ---------- */
+const UPTIME_WINDOW = 10;
+let lastUptimeHeight = null;
+async function computeUptimeIfDue(height){
+  if(lastUptimeHeight!==null && height-lastUptimeHeight < 15) return;
+  lastUptimeHeight = height;
+  try{
+    const heights=[];
+    for(let h=height; h>Math.max(1,height-UPTIME_WINDOW); h--) heights.push(h);
+    const commits=[]; const BATCH=3;
+    for(let i=0;i<heights.length;i+=BATCH){
+      const batch = heights.slice(i,i+BATCH);
+      const res = await Promise.allSettled(batch.map(h=>fetchWithRetry(`/commit?height=${h}`)));
+      commits.push(...res);
+    }
+    const signCount={}; let windowSize=0; let firstErr=null;
+    commits.forEach(res=>{
+      if(res.status!=='fulfilled'){ if(!firstErr) firstErr=res.reason; return; }
+      const commit = res.value?.signed_header?.commit;
+      const precommits = commit?.precommits;
+      if(!precommits) return;
+      const committedHash = commit.block_id?.hash;
+      windowSize++;
+      precommits.forEach(p=>{
+        if(!p || !p.validator_address) return;
+        const signed = p.block_id?.hash && p.block_id.hash===committedHash;
+        if(signed) signCount[p.validator_address]=(signCount[p.validator_address]||0)+1;
+      });
+    });
+    if(windowSize===0){ uptimeState={status:'error', msg:firstErr?firstErr.message:'no /commit data'}; renderValidatorsSourceNote(); return; }
+    let matched=false;
+    validators.forEach(v=>{
+      if(Object.prototype.hasOwnProperty.call(signCount, v.address)){
+        v.uptime = ((signCount[v.address]/windowSize)*100).toFixed(1);
+        uptimeByAddr[v.address]=v.uptime; matched=true;
+      } else {
+        v.uptime='0.0'; uptimeByAddr[v.address]=v.uptime;
+      }
+    });
+    renderValidatorsUI();
+    if(matched) uptimeState = {status:'ok', windowSize};
+    else { uptimeState = {status:'error', msg:'address format mismatch'}; validators.forEach(v=>{v.uptime='—'; delete uptimeByAddr[v.address];}); renderValidatorsUI(); }
+    renderValidatorsSourceNote();
+  } catch(err){
+    uptimeState = {status:'error', msg:err.message};
+    renderValidatorsSourceNote();
+  }
+}
+
+/* ---------- ana canlı döngü ---------- */
+function pulseFirstStat(){
+  const statCard = document.querySelectorAll('.stat-card')[0];
+  statCard.classList.remove('fold-hit'); void statCard.offsetWidth; statCard.classList.add('fold-hit');
+}
+async function tryLiveOnce(){
+  const height = await fetchLiveStatus();
+  await fetchLiveBlocks(height);
+  await fetchLiveValidators(height);
+  return height;
+}
+async function liveTick(){
+  for(let i=0;i<RPC_ENDPOINTS.length;i++){
+    activeRpcIndex = i;
+    try{
+      const height = await tryLiveOnce();
+      if(height!==lastLiveHeight){ pulseFirstStat(); lastLiveHeight=height; }
+      liveMode=true;
+      return;
+    } catch(err){ console.warn('RPC connection error ('+RPC_ENDPOINTS[i].label+'):', err.message); }
+  }
+  if(!liveMode){ dataSourceState={status:'unreachable'}; renderDataSourceNote(); }
+}
+
+applyStaticI18n();
+renderBlocksUI(); renderTxsUI(); renderValidatorsUI();
+renderDataSourceNote(); renderTxPanelNote(); renderValidatorsSourceNote();
+liveTick();
+setInterval(liveTick, 5000);
+</script>
+</body>
+</html>
